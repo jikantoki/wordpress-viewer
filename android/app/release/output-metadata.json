@@ -4,7 +4,7 @@
     "type": "APK",
     "kind": "Directory"
   },
-  "applicationId": "xyz.enoki.capacitor.template",
+  "applicationId": "xyz.enoki.blog.caramelos",
   "variantName": "release",
   "elements": [
     {

@@ -159,6 +159,13 @@
   dependencies:
     tslib "^2.1.0"
 
+"@capacitor/core@latest":
+  version "8.0.2"
+  resolved "https://registry.yarnpkg.com/@capacitor/core/-/core-8.0.2.tgz#2b05838c2729522803e30534d6d7f5d3296424bf"
+  integrity sha512-EXZfxkL6GFJS2cb7TIBR7RiHA5iz6ufDcl1VmUpI2pga3lJ5Ck2+iqbx7N+osL3XYem9ad4XCidJEMm64DX6UQ==
+  dependencies:
+    tslib "^2.1.0"
+
 "@capacitor/device@^8.0.0":
   version "8.0.0"
   resolved "https://registry.npmjs.org/@capacitor/device/-/device-8.0.0.tgz"
@@ -177,6 +184,13 @@
   integrity sha512-ci6gOWd5/uruC3bRTxI3xFd9g82WnnJbdQxOH3oZOATNuedlaAw5c5/zXEIMYfRB7t2x1v8/N9gXkND6/nOmVQ==
   dependencies:
     "@capacitor/synapse" "^1.0.4"
+
+"@capacitor/http@^0.0.2":
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/@capacitor/http/-/http-0.0.2.tgz#a5a3f29d1682662c62736aa953823b9a178e7073"
+  integrity sha512-3UPqYOmVkAQjCWWowSDGPnBkXY7znbPE7lNs8nhwTmE2E5fXTvjHM8PV15zOyn+nenY7zEu9Air49fGjrX+Tjg==
+  dependencies:
+    "@capacitor/core" latest
 
 "@capacitor/push-notifications@^8.0.0":
   version "8.0.0"

@@ -409,6 +409,7 @@ v-card(
       this.env = import.meta.env as any
 
       setTimeout(async () => {
+        // 情報取得
         // eslint-disable-next-line unicorn/no-array-sort
         const sortedList = this.posts.posts.sort((a: any, b: any) => {
           const dateA = new Date(a.date)
@@ -416,6 +417,10 @@ v-card(
           return dateB.getTime() - dateA.getTime()
         })
         const lastUpdated = sortedList[0]
+        if (!lastUpdated) {
+          await this.reload()
+          return
+        }
         const lastUpdatedTime = new Date(lastUpdated.date)
         const list = await this.loadNewList(lastUpdatedTime)
         this.posts.posts = list.concat(this.posts.posts)
@@ -595,34 +600,58 @@ v-card(
           this.reloadDialog = true
         }
         this.loading = true
-        const url = `${this.env.VUE_APP_WORDPRESS_HOST}/wp-json/wp/v2/posts?per_page=${count}&offset=${start}`
-        const response: any = await fetch(url, {
-          method: 'GET',
-        })
-        const list = await response.json()
-        this.reloadDialog = false
-        this.loading = false
-        return list
+        try {
+          const url = `${this.env.VUE_APP_WORDPRESS_HOST}/wp-json/wp/v2/posts?per_page=${count}&offset=${start}`
+          const response: any = await fetch(url, {
+            method: 'GET',
+          })
+          const list = await response.json()
+          this.reloadDialog = false
+          this.loading = false
+          return list
+        } catch (error) {
+          console.error(error)
+          this.reloadDialog = false
+          this.loading = false
+          alert(`投稿の取得に失敗しました。通信環境を確認してください。${JSON.stringify(error)}`)
+          Toast.show({ text: '投稿の取得に失敗しました。通信環境を確認してください。' })
+          return this.posts.posts
+        }
       },
       /**
        * 新しい投稿リストを取得
        * @param lastUpdatedTime 最後に更新した時間
        */
       async loadNewList (lastUpdatedTime: Date) {
-        this.loading = true
-        const url = `${this.env.VUE_APP_WORDPRESS_HOST}/wp-json/wp/v2/posts?after=${lastUpdatedTime.toISOString()}`
-        const response: any = await fetch(url, {
-          method: 'GET',
-        })
-        const list = await response.json()
-        this.loading = false
-        return list
+        try {
+          this.loading = true
+          const url = `${this.env.VUE_APP_WORDPRESS_HOST}/wp-json/wp/v2/posts?after=${lastUpdatedTime.toISOString()}`
+          const response: any = await fetch(url, {
+            method: 'GET',
+          })
+          const list = await response.json()
+          this.loading = false
+          return list
+        } catch (error) {
+          console.error(error)
+          this.loading = false
+          alert(`投稿の取得に失敗しました。通信環境を確認してください。${JSON.stringify(error)}`)
+          Toast.show({ text: '投稿の取得に失敗しました。通信環境を確認してください。' })
+          return []
+        }
       },
       /** 投稿リストをリロード */
       async reload () {
-        const list = await this.loadList(0, 10, true)
-        this.posts.reset()
-        this.posts.posts = list
+        try {
+          const list = await this.loadList(0, 10)
+          this.posts.reset()
+          this.posts.posts = list
+        } catch (error) {
+          console.error(error)
+          this.loading = false
+          alert(`投稿の取得に失敗しました。通信環境を確認してください。${JSON.stringify(error)}`)
+          Toast.show({ text: '投稿の取得に失敗しました。通信環境を確認してください。' })
+        }
       },
       /** もっと見る */
       async showmore () {

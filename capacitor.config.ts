@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'xyz.enoki.capacitor.template',
+  appId: 'xyz.enoki.blog.caramelos',
   appName: 'CapacitorTemplate',
   webDir: 'dist',
   plugins: {
@@ -9,7 +9,7 @@ const config: CapacitorConfig = {
       overlaysWebView: false,
     },
     // BackgroundRunner: {
-    //   label: 'xyz.enoki.capacitor.template.background',
+    //   label: 'xyz.enoki.blog.caramelos.background',
     //   src: 'runners/background-runner.js',
     //   event: 'CapacitorTemplateBackgroundRunner',
     //   repeat: true,
@@ -25,12 +25,12 @@ const config: CapacitorConfig = {
     },
   },
   server: {
-    hostname: 'capacitor-template.enoki.xyz',
+    hostname: 'blog.caramelos.xyz',
     androidScheme: 'https',
   },
   // deepLinks: {
   //   enabled: true,
-  //   prefixes: ['capacitor://', 'https://capacitor-template.enoki.xyz'],
+  //   prefixes: ['capacitor://', 'https://blog.caramelos.xyz'],
   // },
   android: {
     // useLegacyBridge: true,

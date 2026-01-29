@@ -26,22 +26,22 @@ v-card(
         v-btn.mr-2(
           text
           append-icon="mdi-github"
-          @click="openURL('https://github.com/jikantoki/capacitor-template')"
+          @click="openURL('https://github.com/jikantoki/wordpress-viewer')"
         ) Github
         v-btn.ml-2(
           text
           append-icon="mdi-web"
-          @click="openURL('https://capacitor-template.enoki.xyz')"
+          @click="openURL('https://blog.caramelos.xyz')"
         ) ホームページ
     .settings-list
       .setting-item(
         v-ripple
-        @click="openURL('https://capacitor-template.enoki.xyz')"
+        @click="openURL('https://blog.caramelos.xyz')"
         )
         .icon
           v-icon mdi-application-outline
         .text
-          p.title Capacitor Template
+          p.title エノキ電気ニュース
           p.description &copy; 2019 エノキ電気
       .setting-item(
         v-ripple

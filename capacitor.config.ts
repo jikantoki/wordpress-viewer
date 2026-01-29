@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
   appId: 'xyz.enoki.blog.caramelos',
-  appName: 'CapacitorTemplate',
+  appName: 'エノキ電気ニュース',
   webDir: 'dist',
   plugins: {
     StatusBar: {

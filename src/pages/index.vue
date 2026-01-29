@@ -259,10 +259,10 @@ v-card(
             .icon-and-text
               v-icon mdi-qrcode-scan
               v-list-item-title QRコードで友達を探す
-          v-list-item.item(
+          //- v-list-item.item(
             @click="$router.push('/friendlist')"
             v-show="myProfile && myProfile.userId"
-          )
+            )
             .icon-and-text
               v-icon mdi-account-multiple
               v-list-item-title 友達リスト
@@ -282,34 +282,6 @@ v-card(
             .icon-and-text
               v-icon mdi-information
               v-list-item-title このアプリについて
-  v-dialog(
-    v-model="acceptDialog"
-    persistent
-    min-width="500px"
-    )
-    v-card(
-    )
-      v-card-title 友達リクエストが来ています！
-      v-card-text
-        p {{ acceptList.length }}人の友達があなたを待っています。承認してつながろう！
-      v-card-actions
-        v-btn(
-          @click="acceptDialog = false"
-        ) やめとく
-        v-btn(
-          @click="$router.push('/friendlist')"
-          style="background-color: rgb(var(--v-theme-primary)); color: white"
-        ) リクエストを見る
-  v-dialog(
-    v-model="reloadDialog"
-    persistent
-    )
-    v-card
-      v-card-title 読み込み中…
-      v-card-text
-        v-progress-linear(
-          indeterminate
-        )
   //-- 投稿ダイアログ --
   v-dialog(
     v-model="postDialog"
@@ -329,7 +301,7 @@ v-card(
           @click="postDialog = false"
           icon="mdi-close"
           )
-      v-card-text(style="height: inherit; overflow-y: auto;")
+      v-card-text(style="height: -webkit-fill-available; overflow-y: auto;")
         .contents-wrap(
           style="width: 100%;"
         )
@@ -344,18 +316,21 @@ v-card(
             v-html="viewContents ? viewContents.content.rendered : ''"
             style="width: 100%;"
             )
+        .ma-16
 </template>
 
 <script lang="ts">
   import { App } from '@capacitor/app'
   import { Browser } from '@capacitor/browser'
-  import { Toast } from '@capacitor/toast'
+  import { CapacitorHttp } from '@capacitor/core'
 
+  import { Toast } from '@capacitor/toast'
   // @ts-ignore
   import mixins from '@/mixins/mixins'
   import { useMyProfileStore } from '@/stores/myProfile'
   import { usePostsStore } from '@/stores/posts'
   import { useSettingsStore } from '@/stores/settings'
+
   import 'leaflet/dist/leaflet.css'
 
   export default {
@@ -602,10 +577,11 @@ v-card(
         this.loading = true
         try {
           const url = `${this.env.VUE_APP_WORDPRESS_HOST}/wp-json/wp/v2/posts?per_page=${count}&offset=${start}`
-          const response: any = await fetch(url, {
+          const response = await CapacitorHttp.get({
+            url: url,
             method: 'GET',
           })
-          const list = await response.json()
+          const list = await response.data
           this.reloadDialog = false
           this.loading = false
           return list
@@ -626,10 +602,11 @@ v-card(
         try {
           this.loading = true
           const url = `${this.env.VUE_APP_WORDPRESS_HOST}/wp-json/wp/v2/posts?after=${lastUpdatedTime.toISOString()}`
-          const response: any = await fetch(url, {
+          const response = await CapacitorHttp.get({
+            url: url,
             method: 'GET',
           })
-          const list = await response.json()
+          const list = await response.data
           this.loading = false
           return list
         } catch (error) {
@@ -642,16 +619,9 @@ v-card(
       },
       /** 投稿リストをリロード */
       async reload () {
-        try {
-          const list = await this.loadList(0, 10)
-          this.posts.reset()
-          this.posts.posts = list
-        } catch (error) {
-          console.error(error)
-          this.loading = false
-          alert(`投稿の取得に失敗しました。通信環境を確認してください。${JSON.stringify(error)}`)
-          Toast.show({ text: '投稿の取得に失敗しました。通信環境を確認してください。' })
-        }
+        const list = await this.loadList(0, 10)
+        this.posts.reset()
+        this.posts.posts = list
       },
       /** もっと見る */
       async showmore () {

@@ -26,7 +26,6 @@
     "@capacitor/device": "^8.0.0",
     "@capacitor/filesystem": "^8.1.0",
     "@capacitor/geolocation": "^8.0.0",
-    "@capacitor/http": "^0.0.2",
     "@capacitor/push-notifications": "^8.0.0",
     "@capacitor/share": "^8.0.0",
     "@capacitor/status-bar": "^8.0.0",

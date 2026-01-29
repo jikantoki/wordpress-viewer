@@ -8,6 +8,8 @@ export const useSettingsStore = defineStore('settings', {
       theme: 'system' as 'system' | 'light' | 'dark',
       /** 言語 */
       language: '日本語' as const,
+      /** 投稿リストの表示形式 */
+      listType: 'compact' as 'card' | 'compact',
     },
     /** 通知設定 */
     notification: {},

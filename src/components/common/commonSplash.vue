@@ -2,7 +2,7 @@
 .wait
   .wait-wrap(style="background:rgb(var(--v-theme-background));")
     img.splash-img(src="/icon.png")
-    p.mt-4.text-h5.splash-text Capacitor Template
+    p.mt-4.text-h5.splash-text エノキ電気ニュース
     .ma-16
     .loading
       v-progress-linear(indeterminate)

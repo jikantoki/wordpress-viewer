@@ -282,6 +282,10 @@ v-card(
             .icon-and-text
               v-icon mdi-information
               v-list-item-title このアプリについて
+          v-list-item.item( @click="share('https://play.google.com/store/apps/details?id=xyz.enoki.blog.caramelos&hl=ja', 'エノキ電気ニュース')" )
+            .icon-and-text
+              v-icon mdi-share-variant
+              v-list-item-title このアプリを共有する
   //-- 投稿ダイアログ --
   v-dialog(
     v-model="postDialog"
@@ -310,12 +314,35 @@ v-card(
           )
             img.mb-4(
               :src="selectThumbnail(viewContents)"
-              style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 16px;"
+              style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 16px; cursor: pointer;"
               )
           .post-contents(
             v-html="viewContents ? viewContents.content.rendered : ''"
             style="width: 100%;"
             )
+          .share-space(
+            style="display: flex; flex-direction: column; align-items: center;"
+          )
+            hr.my-8(
+              style="width: 90%;"
+            )
+            h2 この記事をシェアする
+            p.my-8 この記事がいいなと思ったら、是非シェアをお願いします！
+            .share-btns(
+              style="display: flex; gap: 16px;"
+            )
+              v-btn(
+                icon="mdi-twitter"
+                size="x-large"
+                color="#1DA1F2"
+                @click="openURL(`https://twitter.com/intent/tweet?text=${viewContents.title.rendered} ${viewContents.link}`)"
+              )
+              v-btn(
+                icon="mdi-share-variant"
+                size="x-large"
+                color="rgb(var(--v-theme-primary))"
+                @click="share(viewContents.link, viewContents.title.rendered)"
+              )
         .ma-16
 </template>
 
@@ -324,14 +351,13 @@ v-card(
   import { Browser } from '@capacitor/browser'
   import { CapacitorHttp } from '@capacitor/core'
 
+  import { Share } from '@capacitor/share'
   import { Toast } from '@capacitor/toast'
   // @ts-ignore
   import mixins from '@/mixins/mixins'
   import { useMyProfileStore } from '@/stores/myProfile'
   import { usePostsStore } from '@/stores/posts'
   import { useSettingsStore } from '@/stores/settings'
-
-  import 'leaflet/dist/leaflet.css'
 
   export default {
     components: {},
@@ -344,7 +370,7 @@ v-card(
         myProfile: useMyProfileStore(),
         /** 友達検索ダイアログ */
         searchFriendDialog: false,
-        /** 検索する友達のID */
+        /** 検索するワード */
         searchFriendId: '',
         /** 友達検索中のローディング画面 */
         searchFriendLoading: false,
@@ -356,8 +382,6 @@ v-card(
         acceptList: [] as any,
         /** 承認してほしい友達がいるダイアログ */
         acceptDialog: false,
-        /** setIntervalしたものをクリアする用 */
-        updateLocationInterval: null as any,
         /** 友達リスト */
         friendList: [] as any[],
         /** 設定ストア */
@@ -521,7 +545,7 @@ v-card(
         searchId = searchId.replace('@', '')
         this.searchFriendLoading = true
         if (!searchId) {
-          this.searchFriendErrorMessage = '検索するIDを入力してください'
+          this.searchFriendErrorMessage = '検索するワードを入力してください'
           this.searchFriendLoading = false
           return
         }
@@ -633,6 +657,14 @@ v-card(
       async viewPost (post: any) {
         this.postDialog = true
         this.viewContents = post
+      },
+      /** シェアダイアログ */
+      async share (content: string, title = '') {
+        console.log(this.viewContents)
+        await Share.share({
+          url: content,
+          title: title,
+        })
       },
     },
   }
@@ -801,6 +833,8 @@ iframe {
     height: auto;
     aspect-ratio: 16/9;
     border-radius: 8px;
+    margin: 8px 0;
+    cursor: pointer;
   }
   .ez-toc-counter {
     margin: 16px;
@@ -854,9 +888,9 @@ iframe {
     margin: 16px 0 8px 0;
   }
   table {
-    width: 100%;
     border-collapse: collapse;
     margin: 16px 0;
+    width: max-content;
     th, td {
       border: 1px solid rgba(var(--v-theme-on-surface), 0.3);
       padding: 8px;
@@ -864,6 +898,30 @@ iframe {
     }
     th {
       background-color: rgba(var(--v-theme-primary), 0.1);
+    }
+  }
+  button.lightbox-trigger {
+    display: none;
+  }
+  figure.wp-block-table {
+    max-width: 100%;
+    width: 100%;
+    overflow-x: auto;
+  }
+  figure.wp-block-gallery {
+    overflow-y: hidden;
+    figure.wp-block-image {
+      min-height: 8em;
+      min-width: 12em;
+      img {
+        aspect-ratio: 16/9;
+        height: 100%;
+        max-width: unset !important;
+        margin: 0;
+      }
+      button {
+        display: none;
+      }
     }
   }
 }

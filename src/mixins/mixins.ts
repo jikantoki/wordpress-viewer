@@ -213,9 +213,6 @@ export default defineComponent({
           message: res.message === '' ? null : res.message,
           friendStatus: profile.body.friendStatus,
           userToken: null as any,
-          lastGetLocationTime: null as any,
-          location: null as any,
-          battery: null as any,
           guest: null as any,
         }
       } else {

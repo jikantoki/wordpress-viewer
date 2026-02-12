@@ -422,8 +422,8 @@ v-card(
         }
         const lastUpdatedTime = new Date(lastUpdated.date)
         const list = await this.loadNewList(lastUpdatedTime)
-        // Only prepend posts if we successfully got non-empty data
-        // (null = error, keep cache; empty array = no new posts, skip update)
+        // 取得に成功し、データがある場合のみ投稿リストの先頭に追加
+        // (null = エラー、キャッシュを保持; 空配列 = 新しい投稿なし、更新しない)
         if (Array.isArray(list) && list.length > 0) {
           this.posts.posts = list.concat(this.posts.posts)
         }
@@ -648,7 +648,7 @@ v-card(
       /** 投稿リストをリロード */
       async reload () {
         const list = await this.loadList(0, 10)
-        // Only update posts if we successfully got data (null means error, empty array is valid)
+        // データ取得に成功した場合のみ投稿リストを更新 (null = エラー、空配列 = 有効なレスポンス)
         if (Array.isArray(list)) {
           this.posts.reset()
           this.posts.posts = list
@@ -658,8 +658,8 @@ v-card(
       async showmore () {
         const nowList = this.posts.posts
         const list = await this.loadList(this.posts.posts.length, 10)
-        // Only append posts if we successfully got non-empty data
-        // (null = error, keep cache; empty array = no more posts, skip update)
+        // 取得に成功し、データがある場合のみ投稿リストに追加
+        // (null = エラー、キャッシュを保持; 空配列 = これ以上の投稿なし、更新しない)
         if (Array.isArray(list) && list.length > 0) {
           this.posts.posts = nowList.concat(list)
         }

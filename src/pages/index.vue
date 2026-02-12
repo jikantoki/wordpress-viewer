@@ -651,7 +651,11 @@ v-card(
       async showmore () {
         const nowList = this.posts.posts
         const list = await this.loadList(this.posts.posts.length, 10)
-        this.posts.posts = nowList.concat(list)
+        if (list.length === 0) {
+          Toast.show({ text: '最後まで検索しました' })
+        } else {
+          this.posts.posts = nowList.concat(list)
+        }
       },
       /** 投稿を表示 */
       async viewPost (post: any) {

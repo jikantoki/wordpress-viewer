@@ -422,7 +422,10 @@ v-card(
         }
         const lastUpdatedTime = new Date(lastUpdated.date)
         const list = await this.loadNewList(lastUpdatedTime)
-        this.posts.posts = list.concat(this.posts.posts)
+        // Only update posts if we successfully got new data
+        if (list && list.length > 0) {
+          this.posts.posts = list.concat(this.posts.posts)
+        }
       }, 10)
 
       /** ようこその復活 */
@@ -615,7 +618,7 @@ v-card(
           this.loading = false
           alert(`投稿の取得に失敗しました。通信環境を確認してください。${JSON.stringify(error)}`)
           Toast.show({ text: '投稿の取得に失敗しました。通信環境を確認してください。' })
-          return this.posts.posts
+          return null
         }
       },
       /**
@@ -638,20 +641,26 @@ v-card(
           this.loading = false
           alert(`投稿の取得に失敗しました。通信環境を確認してください。${JSON.stringify(error)}`)
           Toast.show({ text: '投稿の取得に失敗しました。通信環境を確認してください。' })
-          return []
+          return null
         }
       },
       /** 投稿リストをリロード */
       async reload () {
         const list = await this.loadList(0, 10)
-        this.posts.reset()
-        this.posts.posts = list
+        // Only update posts if we successfully got new data
+        if (list && list.length > 0) {
+          this.posts.reset()
+          this.posts.posts = list
+        }
       },
       /** もっと見る */
       async showmore () {
         const nowList = this.posts.posts
         const list = await this.loadList(this.posts.posts.length, 10)
-        this.posts.posts = nowList.concat(list)
+        // Only update posts if we successfully got new data
+        if (list && list.length > 0) {
+          this.posts.posts = nowList.concat(list)
+        }
       },
       /** 投稿を表示 */
       async viewPost (post: any) {

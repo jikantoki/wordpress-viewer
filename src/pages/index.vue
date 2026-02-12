@@ -423,7 +423,7 @@ v-card(
         const lastUpdatedTime = new Date(lastUpdated.date)
         const list = await this.loadNewList(lastUpdatedTime)
         // Only update posts if we successfully got data (even if empty)
-        if (list && Array.isArray(list)) {
+        if (Array.isArray(list)) {
           if (list.length > 0) {
             this.posts.posts = list.concat(this.posts.posts)
           }
@@ -651,7 +651,7 @@ v-card(
       async reload () {
         const list = await this.loadList(0, 10)
         // Only update posts if we successfully got data (null means error, empty array is valid)
-        if (list !== null && Array.isArray(list)) {
+        if (Array.isArray(list)) {
           this.posts.reset()
           this.posts.posts = list
         }
@@ -661,7 +661,7 @@ v-card(
         const nowList = this.posts.posts
         const list = await this.loadList(this.posts.posts.length, 10)
         // Only update posts if we successfully got data (null means error, empty array is valid)
-        if (list !== null && Array.isArray(list)) {
+        if (Array.isArray(list)) {
           if (list.length > 0) {
             this.posts.posts = nowList.concat(list)
           }

@@ -422,12 +422,10 @@ v-card(
         }
         const lastUpdatedTime = new Date(lastUpdated.date)
         const list = await this.loadNewList(lastUpdatedTime)
-        // Only update posts if we successfully got data (even if empty)
-        if (Array.isArray(list)) {
-          if (list.length > 0) {
-            this.posts.posts = list.concat(this.posts.posts)
-          }
-          // If list is empty but valid, it means no new posts - no action needed
+        // Only prepend posts if we successfully got non-empty data
+        // (null = error, keep cache; empty array = no new posts, skip update)
+        if (Array.isArray(list) && list.length > 0) {
+          this.posts.posts = list.concat(this.posts.posts)
         }
       }, 10)
 
@@ -660,12 +658,10 @@ v-card(
       async showmore () {
         const nowList = this.posts.posts
         const list = await this.loadList(this.posts.posts.length, 10)
-        // Only update posts if we successfully got data (null means error, empty array is valid)
-        if (Array.isArray(list)) {
-          if (list.length > 0) {
-            this.posts.posts = nowList.concat(list)
-          }
-          // If list is empty but valid, it means no more posts - no action needed
+        // Only append posts if we successfully got non-empty data
+        // (null = error, keep cache; empty array = no more posts, skip update)
+        if (Array.isArray(list) && list.length > 0) {
+          this.posts.posts = nowList.concat(list)
         }
       },
       /** 投稿を表示 */

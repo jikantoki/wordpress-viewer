@@ -359,6 +359,9 @@ v-card(
   import { usePostsStore } from '@/stores/posts'
   import { useSettingsStore } from '@/stores/settings'
 
+  /** アンカーリンクスクロールの遅延時間（ミリ秒） */
+  const ANCHOR_SCROLL_DELAY = 300
+
   export default {
     components: {},
     mixins: [mixins],
@@ -392,8 +395,6 @@ v-card(
         postDialog: false,
         /** 投稿内容 */
         viewContents: null as any,
-        /** アンカーリンクスクロールの遅延時間（ミリ秒） */
-        ANCHOR_SCROLL_DELAY: 300,
       }
     },
     computed: {
@@ -769,7 +770,7 @@ v-card(
               // 少し待ってからスクロール
               setTimeout(() => {
                 this.handleAnchorLink(urlObj.hash)
-              }, this.ANCHOR_SCROLL_DELAY)
+              }, ANCHOR_SCROLL_DELAY)
               return
             }
             // 同じ記事内のアンカーリンク

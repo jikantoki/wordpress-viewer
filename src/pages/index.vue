@@ -687,12 +687,12 @@ v-card(
         const links = postContents.querySelectorAll('a')
         const blogHost = this.env.VUE_APP_WORDPRESS_HOST || 'https://blog.caramelos.xyz'
 
-        links.forEach((link: HTMLAnchorElement) => {
+        for (const link of links) {
           // すでにハンドラが設定されている場合はスキップ
-          if (link.dataset.handlerSet === 'true') return
+          if (link.dataset.handlerSet === 'true') continue
           link.dataset.handlerSet = 'true'
 
-          link.addEventListener('click', async (event) => {
+          link.addEventListener('click', async event => {
             event.preventDefault()
             event.stopPropagation()
 
@@ -710,6 +710,7 @@ v-card(
               const blogUrl = new URL(blogHost)
 
               // 同じドメインかチェック
+              // eslint-disable-next-line unicorn/prefer-ternary
               if (linkUrl.hostname === blogUrl.hostname) {
                 // 同じドメイン内のリンク
                 await this.handleSameDomainLink(linkUrl.href)
@@ -722,15 +723,15 @@ v-card(
               await this.openURL(href)
             }
           })
-        })
+        }
       },
       /**
        * アンカーリンクを処理してスムーズにスクロール
        * @param hash アンカー（例: #section-id）
        */
       handleAnchorLink (hash: string) {
-        const targetId = hash.substring(1) // #を除去
-        const targetElement = document.getElementById(targetId)
+        const targetId = hash.slice(1) // #を除去
+        const targetElement = document.querySelector(`#${targetId}`)
 
         if (targetElement) {
           targetElement.scrollIntoView({
@@ -753,17 +754,19 @@ v-card(
             const pathname = urlObj.pathname
             const currentPath = this.viewContents?.link ? new URL(this.viewContents.link).pathname : ''
 
-            if (pathname !== currentPath) {
+            const isSameArticle = pathname === currentPath
+
+            if (!isSameArticle) {
               // 別の記事へのアンカーリンク
               await this.loadAndViewPostByUrl(url)
               // 少し待ってからスクロール
               setTimeout(() => {
                 this.handleAnchorLink(urlObj.hash)
               }, 300)
-            } else {
-              // 同じ記事内のアンカーリンク
-              this.handleAnchorLink(urlObj.hash)
+              return
             }
+            // 同じ記事内のアンカーリンク
+            this.handleAnchorLink(urlObj.hash)
           } else {
             // アンカーなしの同じドメインリンク
             await this.loadAndViewPostByUrl(url)
@@ -791,8 +794,8 @@ v-card(
           // ローカルに存在しない場合はAPIから取得
           // URLからスラッグを抽出（最後のパス部分）
           const urlObj = new URL(url)
-          const pathParts = urlObj.pathname.split('/').filter(part => part)
-          const slug = pathParts[pathParts.length - 1]
+          const pathParts = urlObj.pathname.split('/').filter(Boolean)
+          const slug = pathParts.at(-1)
 
           if (!slug) {
             throw new Error('Invalid URL: no slug found')

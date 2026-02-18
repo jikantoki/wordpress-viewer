@@ -359,7 +359,12 @@ v-card(
   import { usePostsStore } from '@/stores/posts'
   import { useSettingsStore } from '@/stores/settings'
 
-  /** アンカーリンクスクロールの遅延時間（ミリ秒） */
+  /**
+   * アンカーリンクスクロールの遅延時間（ミリ秒）
+   * 別記事に移動してからアンカー位置にスクロールする際、
+   * DOM更新とレンダリングが完了するまでの待機時間。
+   * 300msは記事コンテンツの読み込みとレンダリングに十分な時間。
+   */
   const ANCHOR_SCROLL_DELAY = 300
 
   export default {
@@ -692,8 +697,15 @@ v-card(
         const postContents = document.querySelector('.post-contents')
         if (!postContents) return
 
+        let blogUrl: URL
+        try {
+          blogUrl = new URL(this.blogHost)
+        } catch (error) {
+          console.error('Invalid WordPress host URL:', this.blogHost, error)
+          return
+        }
+
         const links = postContents.querySelectorAll('a')
-        const blogUrl = new URL(this.blogHost)
 
         for (const link of links) {
           // すでにハンドラが設定されている場合はスキップ
@@ -803,7 +815,7 @@ v-card(
           // URLからスラッグを抽出（最後のパス部分）
           const urlObj = new URL(url)
           const pathParts = urlObj.pathname.split('/').filter(Boolean)
-          const slug = pathParts[pathParts.length - 1]
+          const slug = pathParts.at(-1)
 
           if (!slug) {
             throw new Error(`Invalid URL: no slug found in ${url}`)

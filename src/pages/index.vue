@@ -405,7 +405,7 @@ v-card(
     computed: {
       /** WordPressのホストURL */
       blogHost (): string {
-        return this.env?.VUE_APP_WORDPRESS_HOST || 'https://blog.caramelos.xyz'
+        return this.env?.VUE_APP_WORDPRESS_HOST
       },
     },
     watch: {

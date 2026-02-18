@@ -402,6 +402,16 @@ v-card(
           localStorage.setItem('welcomeDialog', String(dialog))
         },
       },
+      /** 投稿ダイアログの表示状態を監視してリンクハンドラを設定 */
+      viewContents: {
+        handler: async function (newContents: any) {
+          if (newContents) {
+            // DOMが更新されるまで待機
+            await this.$nextTick()
+            this.setupPostContentLinkHandlers()
+          }
+        },
+      },
     },
     async mounted () {
       // @ts-ignore
@@ -665,6 +675,154 @@ v-card(
           url: content,
           title: title,
         })
+      },
+      /**
+       * 投稿コンテンツ内のリンクにイベントハンドラを設定
+       * 同じドメイン内のリンクはアプリ内で開き、外部リンクはブラウザで開く
+       */
+      setupPostContentLinkHandlers () {
+        const postContents = document.querySelector('.post-contents')
+        if (!postContents) return
+
+        const links = postContents.querySelectorAll('a')
+        const blogHost = this.env.VUE_APP_WORDPRESS_HOST || 'https://blog.caramelos.xyz'
+
+        links.forEach((link: HTMLAnchorElement) => {
+          // すでにハンドラが設定されている場合はスキップ
+          if (link.dataset.handlerSet === 'true') return
+          link.dataset.handlerSet = 'true'
+
+          link.addEventListener('click', async (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+
+            const href = link.getAttribute('href')
+            if (!href) return
+
+            // アンカーリンク（#で始まる）の場合
+            if (href.startsWith('#')) {
+              this.handleAnchorLink(href)
+              return
+            }
+
+            try {
+              const linkUrl = new URL(href, blogHost)
+              const blogUrl = new URL(blogHost)
+
+              // 同じドメインかチェック
+              if (linkUrl.hostname === blogUrl.hostname) {
+                // 同じドメイン内のリンク
+                await this.handleSameDomainLink(linkUrl.href)
+              } else {
+                // 外部リンク
+                await this.openURL(href)
+              }
+            } catch (error) {
+              console.error('リンク処理エラー:', error)
+              await this.openURL(href)
+            }
+          })
+        })
+      },
+      /**
+       * アンカーリンクを処理してスムーズにスクロール
+       * @param hash アンカー（例: #section-id）
+       */
+      handleAnchorLink (hash: string) {
+        const targetId = hash.substring(1) // #を除去
+        const targetElement = document.getElementById(targetId)
+
+        if (targetElement) {
+          targetElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+          })
+        }
+      },
+      /**
+       * 同じドメイン内のリンクを処理
+       * @param url 完全なURL
+       */
+      async handleSameDomainLink (url: string) {
+        try {
+          const urlObj = new URL(url)
+
+          // アンカー部分がある場合
+          if (urlObj.hash) {
+            // まず記事コンテンツを取得/表示してからスクロール
+            const pathname = urlObj.pathname
+            const currentPath = this.viewContents?.link ? new URL(this.viewContents.link).pathname : ''
+
+            if (pathname !== currentPath) {
+              // 別の記事へのアンカーリンク
+              await this.loadAndViewPostByUrl(url)
+              // 少し待ってからスクロール
+              setTimeout(() => {
+                this.handleAnchorLink(urlObj.hash)
+              }, 300)
+            } else {
+              // 同じ記事内のアンカーリンク
+              this.handleAnchorLink(urlObj.hash)
+            }
+          } else {
+            // アンカーなしの同じドメインリンク
+            await this.loadAndViewPostByUrl(url)
+          }
+        } catch (error) {
+          console.error('同じドメインリンクの処理エラー:', error)
+          Toast.show({ text: '記事の読み込みに失敗しました' })
+        }
+      },
+      /**
+       * URLから記事を読み込んで表示
+       * @param url 記事のURL
+       */
+      async loadAndViewPostByUrl (url: string) {
+        try {
+          // まずローカルストアから同じURLの記事を探す
+          const existingPost = this.posts.posts.find((p: any) => p.link === url)
+
+          if (existingPost) {
+            // ローカルに存在する場合はそれを表示
+            this.viewContents = existingPost
+            return
+          }
+
+          // ローカルに存在しない場合はAPIから取得
+          // URLからスラッグを抽出（最後のパス部分）
+          const urlObj = new URL(url)
+          const pathParts = urlObj.pathname.split('/').filter(part => part)
+          const slug = pathParts[pathParts.length - 1]
+
+          if (!slug) {
+            throw new Error('Invalid URL: no slug found')
+          }
+
+          // WordPressのREST APIでスラッグから記事を検索
+          const blogHost = this.env.VUE_APP_WORDPRESS_HOST || 'https://blog.caramelos.xyz'
+          const apiUrl = `${blogHost}/wp-json/wp/v2/posts?slug=${slug}`
+
+          this.loading = true
+          const response = await CapacitorHttp.get({
+            url: apiUrl,
+            method: 'GET',
+          })
+
+          if (response.data && response.data.length > 0) {
+            const post = response.data[0]
+            // ストアに追加
+            this.posts.posts.unshift(post)
+            // 表示
+            this.viewContents = post
+          } else {
+            throw new Error('Post not found')
+          }
+        } catch (error) {
+          console.error('記事の読み込みエラー:', error)
+          Toast.show({ text: '記事の読み込みに失敗しました' })
+        } finally {
+          this.loading = false
+        }
       },
     },
   }

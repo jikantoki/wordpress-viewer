@@ -803,10 +803,10 @@ v-card(
           // URLからスラッグを抽出（最後のパス部分）
           const urlObj = new URL(url)
           const pathParts = urlObj.pathname.split('/').filter(Boolean)
-          const slug = pathParts.at(-1)
+          const slug = pathParts[pathParts.length - 1]
 
           if (!slug) {
-            throw new Error('Invalid URL: no slug found')
+            throw new Error(`Invalid URL: no slug found in ${url}`)
           }
 
           // WordPressのREST APIでスラッグから記事を検索

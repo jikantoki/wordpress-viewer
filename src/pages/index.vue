@@ -392,9 +392,16 @@ v-card(
         postDialog: false,
         /** 投稿内容 */
         viewContents: null as any,
+        /** アンカーリンクスクロールの遅延時間（ミリ秒） */
+        ANCHOR_SCROLL_DELAY: 300,
       }
     },
-    computed: {},
+    computed: {
+      /** WordPressのホストURL */
+      blogHost (): string {
+        return this.env?.VUE_APP_WORDPRESS_HOST || 'https://blog.caramelos.xyz'
+      },
+    },
     watch: {
       /** ようこそ画面の表示状態を保存 */
       optionsDialog: {
@@ -685,7 +692,7 @@ v-card(
         if (!postContents) return
 
         const links = postContents.querySelectorAll('a')
-        const blogHost = this.env.VUE_APP_WORDPRESS_HOST || 'https://blog.caramelos.xyz'
+        const blogUrl = new URL(this.blogHost)
 
         for (const link of links) {
           // すでにハンドラが設定されている場合はスキップ
@@ -706,8 +713,7 @@ v-card(
             }
 
             try {
-              const linkUrl = new URL(href, blogHost)
-              const blogUrl = new URL(blogHost)
+              const linkUrl = new URL(href, this.blogHost)
 
               // 同じドメインかチェック
               // eslint-disable-next-line unicorn/prefer-ternary
@@ -731,7 +737,8 @@ v-card(
        */
       handleAnchorLink (hash: string) {
         const targetId = hash.slice(1) // #を除去
-        const targetElement = document.querySelector(`#${targetId}`)
+        // eslint-disable-next-line unicorn/prefer-query-selector
+        const targetElement = document.getElementById(targetId)
 
         if (targetElement) {
           targetElement.scrollIntoView({
@@ -762,7 +769,7 @@ v-card(
               // 少し待ってからスクロール
               setTimeout(() => {
                 this.handleAnchorLink(urlObj.hash)
-              }, 300)
+              }, this.ANCHOR_SCROLL_DELAY)
               return
             }
             // 同じ記事内のアンカーリンク
@@ -802,8 +809,7 @@ v-card(
           }
 
           // WordPressのREST APIでスラッグから記事を検索
-          const blogHost = this.env.VUE_APP_WORDPRESS_HOST || 'https://blog.caramelos.xyz'
-          const apiUrl = `${blogHost}/wp-json/wp/v2/posts?slug=${slug}`
+          const apiUrl = `${this.blogHost}/wp-json/wp/v2/posts?slug=${slug}`
 
           this.loading = true
           const response = await CapacitorHttp.get({

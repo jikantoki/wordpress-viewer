@@ -11,8 +11,14 @@ v-card(
     .flex(
       style="display: flex; align-items: center;"
     )
-      .text-h5.mx-4 最新記事
+      .text-h5.mx-4 {{ selectedCategory ? selectedCategory.name : '最新記事' }}
       v-spacer
+      v-btn(
+        v-if="selectedCategory"
+        icon="mdi-close"
+        @click="clearCategoryFilter()"
+        title="カテゴリフィルタをクリア"
+      )
       v-btn(
         icon="mdi-reload"
         @click="reload()"
@@ -60,14 +66,18 @@ v-card(
             p.opacity05(
             ) 投稿日: {{ new Date(post.date).toLocaleDateString() }}
         p.description {{ post.excerpt.rendered.replace(/<[^>]+>/g, '').slice(0, 100) }}...
-        //- .category.pa-2
-          span.opacity05 カテゴリ:
-          span.py-2.px-4(
-            v-for="(cat, index) in post._embedded['wp:term'][0]"
+        .category.mt-2(
+          v-if="post._embedded && post._embedded['wp:term'] && post._embedded['wp:term'][0] && post._embedded['wp:term'][0].length > 0"
+          style="display: flex; flex-wrap: wrap; gap: 0.5em;"
+          )
+          v-chip(
+            v-for="cat in post._embedded['wp:term'][0]"
             :key="cat.id"
-            style="background-color: rgba(var(--v-theme-primary), 0.1); border-radius: 8px;"
+            size="small"
+            @click.stop="filterByCategory(cat)"
+            style="cursor: pointer;"
             )
-            | {{ cat.name }}<span v-if="index < post._embedded['wp:term'][0].length - 1">, </span>
+            | {{ cat.name }}
         img.mt-2(
           :src="selectThumbnail(post)"
           style="border-radius: 8px; width: 100%; aspect-ratio: 16/9; object-fit: cover;"
@@ -93,6 +103,18 @@ v-card(
             p.description.mt-2(
               style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
             ) {{ post.excerpt.rendered.replace(/<[^>]+>/g, '').slice(0, 100) }}...
+          .category.mt-2(
+            v-if="post._embedded && post._embedded['wp:term'] && post._embedded['wp:term'][0] && post._embedded['wp:term'][0].length > 0"
+            style="display: flex; flex-wrap: wrap; gap: 0.5em;"
+            )
+            v-chip(
+              v-for="cat in post._embedded['wp:term'][0]"
+              :key="cat.id"
+              size="small"
+              @click.stop="filterByCategory(cat)"
+              style="cursor: pointer;"
+              )
+              | {{ cat.name }}
     //-- もっと見るボタン --
     .text-center.my-4
       v-btn(
@@ -282,68 +304,14 @@ v-card(
             .icon-and-text
               v-icon mdi-information
               v-list-item-title このアプリについて
+          v-list-item.item( @click="openURL(env.VUE_APP_WORDPRESS_HOST)" )
+            .icon-and-text
+              v-icon mdi-open-in-new
+              v-list-item-title エノキ電気ニュースを開く
           v-list-item.item( @click="share('https://play.google.com/store/apps/details?id=xyz.enoki.blog.caramelos&hl=ja', 'エノキ電気ニュース')" )
             .icon-and-text
               v-icon mdi-share-variant
               v-list-item-title このアプリを共有する
-  //-- 投稿ダイアログ --
-  v-dialog(
-    v-model="postDialog"
-    transition="dialog-bottom-transition"
-    fullscreen
-  )
-    v-card(max-width="100%")
-      .top-android-15-or-higher(v-if="settings.hidden.isAndroid15OrHigher")
-      v-card-actions
-        p.ml-2(
-          class="headline"
-          style="font-size: 1.3em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
-          ) {{ viewContents ? viewContents.title.rendered : '投稿' }}
-        v-spacer
-        v-btn(
-          text
-          @click="postDialog = false"
-          icon="mdi-close"
-          )
-      v-card-text(style="height: -webkit-fill-available; overflow-y: auto;")
-        .contents-wrap(
-          style="width: 100%;"
-        )
-          .thumbnail(
-            v-if="viewContents"
-          )
-            img.mb-4(
-              :src="selectThumbnail(viewContents)"
-              style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 16px; cursor: pointer;"
-              )
-          .post-contents(
-            v-html="viewContents ? viewContents.content.rendered : ''"
-            style="width: 100%;"
-            )
-          .share-space(
-            style="display: flex; flex-direction: column; align-items: center;"
-          )
-            hr.my-8(
-              style="width: 90%;"
-            )
-            h2 この記事をシェアする
-            p.my-8 この記事がいいなと思ったら、是非シェアをお願いします！
-            .share-btns(
-              style="display: flex; gap: 16px;"
-            )
-              v-btn(
-                icon="mdi-twitter"
-                size="x-large"
-                color="#1DA1F2"
-                @click="openURL(`https://twitter.com/intent/tweet?text=${viewContents.title.rendered} ${viewContents.link}`)"
-              )
-              v-btn(
-                icon="mdi-share-variant"
-                size="x-large"
-                color="rgb(var(--v-theme-primary))"
-                @click="share(viewContents.link, viewContents.title.rendered)"
-              )
-        .ma-16
 </template>
 
 <script lang="ts">
@@ -358,6 +326,15 @@ v-card(
   import { useMyProfileStore } from '@/stores/myProfile'
   import { usePostsStore } from '@/stores/posts'
   import { useSettingsStore } from '@/stores/settings'
+
+  /**
+   * WordPressカテゴリの型定義
+   */
+  interface WPCategory {
+    id: number
+    name: string
+    slug?: string
+  }
 
   export default {
     components: {},
@@ -389,12 +366,18 @@ v-card(
         posts: usePostsStore(),
         reloadDialog: false,
         loading: false,
-        postDialog: false,
         /** 投稿内容 */
         viewContents: null as any,
+        /** 選択中のカテゴリ */
+        selectedCategory: null as WPCategory | null,
       }
     },
-    computed: {},
+    computed: {
+      /** WordPressのホストURL */
+      blogHost (): string {
+        return this.env?.VUE_APP_WORDPRESS_HOST
+      },
+    },
     watch: {
       /** ようこそ画面の表示状態を保存 */
       optionsDialog: {
@@ -422,7 +405,11 @@ v-card(
         }
         const lastUpdatedTime = new Date(lastUpdated.date)
         const list = await this.loadNewList(lastUpdatedTime)
-        this.posts.posts = list.concat(this.posts.posts)
+        // 取得に成功し、データがある場合のみ投稿リストの先頭に追加
+        // (null = エラー、キャッシュを保持; 空配列 = 新しい投稿なし、更新しない)
+        if (Array.isArray(list) && list.length > 0) {
+          this.posts.posts = list.concat(this.posts.posts)
+        }
       }, 10)
 
       /** ようこその復活 */
@@ -460,9 +447,6 @@ v-card(
         } else if (this.optionsDialog) {
           /** オプションダイアログを閉じる */
           this.optionsDialog = false
-        } else if (this.postDialog) {
-          /** 投稿ダイアログを閉じる */
-          this.postDialog = false
         } else if (this.$route.path === '/') {
           /** ルートページならアプリを最小化 */
           App.minimizeApp()
@@ -600,7 +584,15 @@ v-card(
         }
         this.loading = true
         try {
-          const url = `${this.env.VUE_APP_WORDPRESS_HOST}/wp-json/wp/v2/posts?per_page=${count}&offset=${start}`
+          const params = new URLSearchParams({
+            _embed: '1',
+            per_page: count.toString(),
+            offset: start.toString(),
+          })
+          if (this.selectedCategory) {
+            params.append('categories', this.selectedCategory.id.toString())
+          }
+          const url = `${this.env.VUE_APP_WORDPRESS_HOST}/wp-json/wp/v2/posts?${params.toString()}`
           const response = await CapacitorHttp.get({
             url: url,
             method: 'GET',
@@ -615,7 +607,7 @@ v-card(
           this.loading = false
           alert(`投稿の取得に失敗しました。通信環境を確認してください。${JSON.stringify(error)}`)
           Toast.show({ text: '投稿の取得に失敗しました。通信環境を確認してください。' })
-          return this.posts.posts
+          return null
         }
       },
       /**
@@ -625,7 +617,7 @@ v-card(
       async loadNewList (lastUpdatedTime: Date) {
         try {
           this.loading = true
-          const url = `${this.env.VUE_APP_WORDPRESS_HOST}/wp-json/wp/v2/posts?after=${lastUpdatedTime.toISOString()}`
+          const url = `${this.env.VUE_APP_WORDPRESS_HOST}/wp-json/wp/v2/posts?_embed&after=${lastUpdatedTime.toISOString()}`
           const response = await CapacitorHttp.get({
             url: url,
             method: 'GET',
@@ -638,25 +630,39 @@ v-card(
           this.loading = false
           alert(`投稿の取得に失敗しました。通信環境を確認してください。${JSON.stringify(error)}`)
           Toast.show({ text: '投稿の取得に失敗しました。通信環境を確認してください。' })
-          return []
+          return null
         }
       },
       /** 投稿リストをリロード */
       async reload () {
         const list = await this.loadList(0, 10)
-        this.posts.reset()
-        this.posts.posts = list
+        // データ取得に成功した場合のみ投稿リストを更新 (null = エラー、空配列 = 有効なレスポンス)
+        if (Array.isArray(list)) {
+          this.posts.reset()
+          this.posts.posts = list
+        }
       },
       /** もっと見る */
       async showmore () {
         const nowList = this.posts.posts
         const list = await this.loadList(this.posts.posts.length, 10)
-        this.posts.posts = nowList.concat(list)
+        // 取得に成功し、データがある場合のみ投稿リストに追加
+        // (null = エラー、キャッシュを保持; 空配列 = これ以上の投稿なし、更新しない)
+        if (list && list.length > 0) {
+          this.posts.posts = nowList.concat(list)
+        } else {
+          Toast.show({ text: '最後まで検索しました！' })
+        }
       },
-      /** 投稿を表示 */
-      async viewPost (post: any) {
-        this.postDialog = true
-        this.viewContents = post
+      /** カテゴリでフィルタリング */
+      async filterByCategory (category: WPCategory) {
+        this.selectedCategory = category
+        await this.reload()
+      },
+      /** カテゴリフィルタをクリア */
+      async clearCategoryFilter () {
+        this.selectedCategory = null
+        await this.reload()
       },
       /** シェアダイアログ */
       async share (content: string, title = '') {
@@ -666,11 +672,173 @@ v-card(
           title: title,
         })
       },
+      /**
+       * 投稿コンテンツ内のリンクにイベントハンドラを設定
+       * 同じドメイン内のリンクはアプリ内で開き、外部リンクはブラウザで開く
+       */
+      setupPostContentLinkHandlers () {
+        const postContents = document.querySelector('.post-contents')
+        if (!postContents) return
+
+        let blogUrl: URL
+        try {
+          blogUrl = new URL(this.blogHost)
+        } catch (error) {
+          console.error('Invalid WordPress host URL:', this.blogHost, error)
+          return
+        }
+
+        const links = postContents.querySelectorAll('a')
+
+        for (const link of Array.from(links)) {
+          // すでにハンドラが設定されている場合はスキップ
+          if (link.dataset.handlerSet === 'true') continue
+          link.dataset.handlerSet = 'true'
+
+          link.addEventListener('click', async event => {
+            event.preventDefault()
+            event.stopPropagation()
+
+            const href = link.getAttribute('href')
+            if (!href) return
+
+            // アンカーリンク（#で始まる）の場合
+            if (href.startsWith('#')) {
+              this.handleAnchorLink(href)
+              return
+            }
+
+            try {
+              const linkUrl = new URL(href, this.blogHost)
+
+              // 同じドメインかチェック
+              // eslint-disable-next-line unicorn/prefer-ternary
+              if (linkUrl.hostname === blogUrl.hostname) {
+                // 同じドメイン内のリンク
+                await this.handleSameDomainLink(linkUrl.href)
+              } else {
+                // 外部リンク
+                await this.openURL(href)
+              }
+            } catch (error) {
+              console.error('リンク処理エラー:', error)
+              await this.openURL(href)
+            }
+          })
+        }
+      },
+      /**
+       * アンカーリンクを処理してスムーズにスクロール
+       * @param hash アンカー（例: #section-id）
+       */
+      handleAnchorLink (hash: string) {
+        const targetId = hash.slice(1) // #を除去
+        // eslint-disable-next-line unicorn/prefer-query-selector
+        const targetElement = document.getElementById(targetId)
+
+        if (targetElement) {
+          targetElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+          })
+        }
+      },
+      /**
+       * 同じドメイン内のリンクを処理
+       * @param url 完全なURL
+       */
+      async handleSameDomainLink (url: string) {
+        try {
+          const urlObj = new URL(url)
+
+          // アンカー部分がある場合
+          if (urlObj.hash) {
+            // まず記事コンテンツを取得/表示してからスクロール
+            const pathname = urlObj.pathname
+            const currentPath = this.viewContents?.link ? new URL(this.viewContents.link).pathname : ''
+
+            const isSameArticle = pathname === currentPath
+
+            if (!isSameArticle) {
+              // 別の記事へのアンカーリンク
+              await this.loadAndViewPostByUrl(url)
+              // 少し待ってからスクロール
+              setTimeout(() => {
+                this.handleAnchorLink(urlObj.hash)
+              }, 0)
+              return
+            }
+            // 同じ記事内のアンカーリンク
+            this.handleAnchorLink(urlObj.hash)
+          } else {
+            // アンカーなしの同じドメインリンク
+            await this.loadAndViewPostByUrl(url)
+          }
+        } catch (error) {
+          console.error('同じドメインリンクの処理エラー:', error)
+          Toast.show({ text: '記事の読み込みに失敗しました' })
+        }
+      },
+      /**
+       * URLから記事を読み込んで表示
+       * @param url 記事のURL
+       */
+      async loadAndViewPostByUrl (url: string) {
+        try {
+          // まずローカルストアから同じURLの記事を探す
+          const existingPost = this.posts.posts.find((p: any) => p.link === url)
+
+          if (existingPost) {
+            // ローカルに存在する場合はそれを表示
+            this.viewContents = existingPost
+            return
+          }
+
+          // ローカルに存在しない場合はAPIから取得
+          // URLからスラッグを抽出（最後のパス部分）
+          const urlObj = new URL(url)
+          const pathParts = urlObj.pathname.split('/').filter(Boolean)
+          const slug = pathParts.at(-1)
+
+          if (!slug) {
+            throw new Error(`Invalid URL: no slug found in ${url}`)
+          }
+
+          // WordPressのREST APIでスラッグから記事を検索
+          const apiUrl = `${this.blogHost}/wp-json/wp/v2/posts?slug=${slug}`
+
+          this.loading = true
+          const response = await CapacitorHttp.get({
+            url: apiUrl,
+            method: 'GET',
+          })
+
+          if (response.data && response.data.length > 0) {
+            const post = response.data[0]
+            // ストアに追加
+            this.posts.posts.unshift(post)
+            // 表示
+            this.viewContents = post
+          } else {
+            throw new Error('Post not found')
+          }
+        } catch (error) {
+          console.error('記事の読み込みエラー:', error)
+          Toast.show({ text: '記事の読み込みに失敗しました' })
+        } finally {
+          this.loading = false
+        }
+      },
+      /** 投稿を表示 */
+      async viewPost (post: any) {
+        this.posts.setCurrentPost(post)
+        this.$router.push(`/post/${post.id}`)
+      },
     },
   }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 //scopedだとv-dialog内のスタイルが適用されないため外す
 .right-bottom-buttons {
   position: fixed;
@@ -816,114 +984,4 @@ v-card(
     background-color: rgba(var(--v-theme-primary), 0.1);
   }
 }
-
-iframe {
-  max-width: 100%;
-  aspect-ratio: 16 / 9;
-  height: auto;
-  border-radius: 8px;
-  margin: 8px 0;
-}
-
-.post-contents {
-  img {
-    width: 100%!important;
-    min-width: 100%!important;
-    max-width: 100%!important;
-    height: auto;
-    aspect-ratio: 16/9;
-    border-radius: 8px;
-    margin: 8px 0;
-    cursor: pointer;
-  }
-  .ez-toc-counter {
-    margin: 16px;
-  }
-  .wp-block-gallery {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    .wp-block-image {
-      flex: 1;
-      min-width: 33%;
-    }
-  }
-  .wp-block-visual-link-preview-link {
-    border-radius: 8px;
-    border: solid 1px rgba(var(--v-theme-on-surface), 0.3);
-    padding: 8px;
-    margin: 8px 0;
-    display: flex;
-    cursor: pointer;
-    .vlp-link-image{
-      border-radius: 8px;
-      width: 120px;
-      height: 100%;
-      object-fit: cover;
-      margin-right: 8px;
-      img {
-        border-radius: 8px;
-        width: 120px;
-        height: 100%;
-        object-fit: cover;
-        margin-right: 8px;
-      }
-    }
-    .vlp-layout-zone-main {
-      .vlp-link-title {
-        font-size: 1.1em;
-        font-weight: bold;
-        margin-bottom: 4px;
-      }
-      .vlp-link-summary {
-        font-size: 0.9em;
-        color: rgba(var(--v-theme-on-surface), 0.7);
-      }
-    }
-  }
-  a {
-    color: rgb(var(--v-theme-primary));
-  }
-  .wp-block-heading {
-    margin: 16px 0 8px 0;
-  }
-  table {
-    border-collapse: collapse;
-    margin: 16px 0;
-    width: max-content;
-    th, td {
-      border: 1px solid rgba(var(--v-theme-on-surface), 0.3);
-      padding: 8px;
-      text-align: left;
-    }
-    th {
-      background-color: rgba(var(--v-theme-primary), 0.1);
-    }
-  }
-  button.lightbox-trigger {
-    display: none;
-  }
-  figure.wp-block-table {
-    max-width: 100%;
-    width: 100%;
-    overflow-x: auto;
-  }
-  figure.wp-block-gallery {
-    overflow-y: hidden;
-    figure.wp-block-image {
-      min-height: 8em;
-      min-width: 12em;
-      img {
-        aspect-ratio: 16/9;
-        height: 100%;
-        max-width: unset !important;
-        margin: 0;
-      }
-      button {
-        display: none;
-      }
-    }
-  }
-}
-
 </style>

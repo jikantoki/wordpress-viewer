@@ -400,6 +400,7 @@ v-card(
       )
         img(
           :src="selectedImageUrl"
+          :alt="selectedImageAlt"
           style="max-width: 100%; max-height: 90vh; object-fit: contain; cursor: zoom-out;"
           @click.stop="imageDialog = false"
         )
@@ -474,6 +475,8 @@ v-card(
         imageDialog: false,
         /** 選択された画像のURL */
         selectedImageUrl: '' as string,
+        /** 選択された画像のalt属性 */
+        selectedImageAlt: '' as string,
       }
     },
     computed: {
@@ -865,8 +868,10 @@ v-card(
             event.stopPropagation()
 
             const src = img.getAttribute('src')
+            const alt = img.getAttribute('alt') || ''
             if (src) {
               this.selectedImageUrl = src
+              this.selectedImageAlt = alt
               this.imageDialog = true
             }
           })

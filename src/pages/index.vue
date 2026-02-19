@@ -601,9 +601,9 @@ v-card(
         // 取得に成功し、データがある場合のみ投稿リストに追加
         // (null = エラー、キャッシュを保持; 空配列 = これ以上の投稿なし、更新しない)
         if (Array.isArray(list) && list.length > 0) {
-          Toast.show({ text: '最後まで検索しました' })
-        } else {
           this.posts.posts = nowList.concat(list)
+        } else {
+          Toast.show({ text: '最後まで検索しました' })
         }
       },
       /** 投稿を表示 */

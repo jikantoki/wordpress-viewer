@@ -12,7 +12,7 @@ v-card(
     p.ml-2(
       class="headline"
       style="font-size: 1.3em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
-      ) {{ viewContents ? viewContents.title.rendered : '投稿' }}
+      ) {{ viewContents ? viewContents.title?.rendered : '投稿' }}
     v-spacer
     v-btn(
       icon="mdi-reload"
@@ -41,7 +41,7 @@ v-card(
           style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 16px; cursor: pointer;"
           )
       .post-contents(
-        v-html="viewContents ? viewContents.content.rendered : ''"
+        v-html="viewContents ? viewContents.content?.rendered : ''"
         style="width: 100%;"
         )
       .share-space(
@@ -60,7 +60,7 @@ v-card(
             icon="mdi-twitter"
             size="x-large"
             color="#1DA1F2"
-            @click="openURL(`https://twitter.com/intent/tweet?text=${viewContents.title.rendered} ${viewContents.link}`)"
+            @click="openURL(`https://twitter.com/intent/tweet?text=${viewContents.title?.rendered} ${viewContents.link}`)"
           )
           v-btn(
             icon="mdi-share-variant"
@@ -132,7 +132,31 @@ v-dialog(
         }
       },
     },
-    mounted () {
+    async mounted () {
+      // postIdをもとに投稿を読み込む
+      const postId = this.postId
+      console.log(postId)
+
+      let found = false
+      let cnt = 0
+      for (const post of this.posts.posts) {
+        if (post.id.toString() === postId) {
+          console.log('あった！')
+          found = true
+          this.viewContents = this.posts.posts[cnt]
+          console.log(this.viewContents)
+          break
+        }
+        cnt++
+      }
+      if (!found) {
+        console.log('なかった！')
+        this.loading = true
+        const apiUrl = `${this.env.VUE_APP_WORDPRESS_HOST}/wp-json/wp/v2/posts?include=${postId}&_embed`
+        await this.loadPost()
+        this.loading = false
+      }
+      /*
       // Piniaストアから投稿を取得
       if (this.posts.currentPost) {
         this.viewContents = this.posts.currentPost
@@ -143,6 +167,7 @@ v-dialog(
       this.$nextTick(() => {
         this.setupPostContentLinkHandlers()
       })
+        */
     },
     methods: {
       /** 投稿を読み込む */
@@ -150,6 +175,7 @@ v-dialog(
         try {
           this.loading = true
           const url = `${this.env.VUE_APP_WORDPRESS_HOST}/wp-json/wp/v2/posts/${this.postId}?_embed`
+          console.log('Loading post from URL:', url)
           const response = await CapacitorHttp.get({
             url: url,
             method: 'GET',
@@ -255,7 +281,6 @@ v-dialog(
           const pathParts = path.split('/').filter(Boolean)
           const apiUrl = `${this.env.VUE_APP_WORDPRESS_HOST}/wp-json/wp/v2/posts?slug=${pathParts.at(-1)}&_embed`
 
-          console.log('Scrolling to anchor:')
           const response = await CapacitorHttp.get({
             url: apiUrl,
             method: 'GET',
@@ -302,7 +327,7 @@ v-dialog(
         if (post._embedded && post._embedded['wp:featuredmedia']) {
           return post._embedded['wp:featuredmedia'][0].source_url
         }
-        return '/no-image.png'
+        return '/thumbnail.jpg' // デフォルトのサムネイル画像
       },
 
       /** URLを開く */

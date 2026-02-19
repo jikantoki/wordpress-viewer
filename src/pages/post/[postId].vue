@@ -68,7 +68,11 @@ v-card(
             color="rgb(var(--v-theme-primary))"
             @click="share(viewContents.link, viewContents.title.rendered)"
           )
-    .ma-16
+    .copyright.ma-16(
+      style="text-align: center;"
+    )
+      p &copy; 2019 エノキ電気
+    .ma-16.pa-16
 v-dialog(
   v-model="loading"
   hide-overlay
@@ -362,6 +366,7 @@ v-dialog(
   height: 30px;
 }
 
+// WordPressのブロックエディタで生成されるiframeのスタイル調整
 iframe {
   max-width: 100%;
   aspect-ratio: 16 / 9;
@@ -370,12 +375,15 @@ iframe {
   margin: 8px 0;
 }
 
+// WordPressのブロックエディタで生成されるコンテンツのスタイル調整
 .post-contents {
+  // WordPressのブロックエディタで生成される画像のスタイル調整
   ::v-deep(img) {
     max-width: 100%;
     height: auto;
   }
 
+  // WordPressのブロックエディタで生成されるリンクのスタイル調整
   ::v-deep(a) {
     color: rgb(var(--v-theme-primary));
     text-decoration: none;
@@ -385,6 +393,7 @@ iframe {
     }
   }
 
+  // WordPressのブロックエディタで生成される画像のスタイル調整
   img {
     width: 100%!important;
     min-width: 100%!important;
@@ -396,9 +405,13 @@ iframe {
     object-fit: cover !important;
     cursor: pointer;
   }
+
+  // 目次のスタイル調整
   .ez-toc-counter {
     margin: 16px;
   }
+
+  // WordPressのブロックエディタで生成されるギャラリーのスタイル調整
   .wp-block-gallery {
     display: flex;
     gap: 8px;
@@ -408,6 +421,8 @@ iframe {
       min-width: 33%;
     }
   }
+
+  // WordPressのブロックエディタで生成されるリンクのスタイル調整
   .wp-block-visual-link-preview-link {
     border-radius: 8px;
     border: solid 1px rgba(var(--v-theme-on-surface), 0.3);
@@ -424,6 +439,8 @@ iframe {
       height: 100%;
       z-index: 1;
     }
+
+    // WordPressのブロックエディタで生成されるリンクのスタイル調整
     .vlp-link-image{
       border-radius: 8px;
       width: 120px;
@@ -438,6 +455,8 @@ iframe {
         margin-right: 8px;
       }
     }
+
+    // WordPressのブロックエディタで生成されるリンクのスタイル調整
     .vlp-layout-zone-main {
       .vlp-link-title {
         font-size: 1.1em;
@@ -450,12 +469,18 @@ iframe {
       }
     }
   }
+
+  // WordPressのブロックエディタで生成されるリンクのスタイル調整
   a {
     color: rgb(var(--v-theme-primary));
   }
+
+  // WordPressの見出しブロックのスタイル調整
   .wp-block-heading {
     margin: 16px 0 8px 0;
   }
+
+  // WordPressのテーブルブロックのスタイル調整
   table {
     border-collapse: collapse;
     margin: 16px 0;
@@ -469,14 +494,20 @@ iframe {
       background-color: rgba(var(--v-theme-primary), 0.1);
     }
   }
+
+  // WordPressのライトボックス用のボタンは、アプリ内でライトボックスが機能しないため非表示にする
   button.lightbox-trigger {
     display: none;
   }
+
+  // WordPressのテーブルブロックは、幅が広すぎることがあるため、スタイルを調整
   figure.wp-block-table {
     max-width: 100%;
     width: 100%;
     overflow-x: auto;
   }
+
+  // WordPressのギャラリーは、画像が小さく表示されることがあるため、スタイルを調整
   figure.wp-block-gallery {
     overflow-y: hidden;
     figure.wp-block-image {
@@ -495,7 +526,38 @@ iframe {
   }
 }
 
+// 目次のスタイル調整
 #ez-toc-container {
+  border-radius: 8px;
+  border: solid 1px rgba(var(--v-theme-on-surface), 0.3);
+  padding: 16px;
+  width: 100%;
+  margin: 16px 0;
+  .ez-toc-list {
+    list-style: none;
+    padding-left: 0;
+    li {
+      margin: 8px 0;
+      a {
+        color: rgb(var(--v-theme-primary));
+        text-decoration: none;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    &.ez-toc-list-level-1 {
+      .ez-toc-list-level-2 {
+        margin-left: 16px;
+      }
+    }
+    &.ez-toc-list-level-2 {
+      .ez-toc-list-level-3 {
+        margin-left: 16px;
+      }
+    }
+    }
+  }
   .ez-toc-title {
     font-size: 1.5em;
     font-weight: bold;

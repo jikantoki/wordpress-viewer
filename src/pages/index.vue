@@ -338,6 +338,8 @@ v-card(
               :src="selectThumbnail(viewContents)"
               style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 16px; cursor: pointer;"
               )
+          //.test
+            p {{ viewContents }}
           .category-section.mb-4(
             v-if="viewContents && viewContents._embedded && viewContents._embedded['wp:term'] && viewContents._embedded['wp:term'][0] && viewContents._embedded['wp:term'][0].length > 0"
             style="display: flex; flex-wrap: wrap; gap: 0.5em; align-items: center;"
@@ -737,10 +739,10 @@ v-card(
         const list = await this.loadList(this.posts.posts.length, 10)
         // 取得に成功し、データがある場合のみ投稿リストに追加
         // (null = エラー、キャッシュを保持; 空配列 = これ以上の投稿なし、更新しない)
-        if (Array.isArray(list) && list.length > 0) {
-          Toast.show({ text: '最後まで検索しました' })
-        } else {
+        if (list && list.length > 0) {
           this.posts.posts = nowList.concat(list)
+        } else {
+          Toast.show({ text: '最後まで検索しました！' })
         }
       },
       /** 投稿を表示 */

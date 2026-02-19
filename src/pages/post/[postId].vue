@@ -28,7 +28,6 @@ v-card(
       style="width: 100%;"
     )
       .loading(
-        style="border-top: solid 1px;"
       )
         v-progress-linear(
           indeterminate
@@ -138,11 +137,9 @@ v-card(
           const response = await CapacitorHttp.get({
             url: url,
             method: 'GET',
-            params: {
-              _embed: 'true',
-            },
           })
           this.viewContents = response.data
+          console.log('Post loaded:', response.data)
           this.posts.setCurrentPost(response.data)
         } catch (error) {
           console.error('Failed to load post:', error)
@@ -184,7 +181,7 @@ v-card(
         }
 
         const links = postContents.querySelectorAll('a')
-        for (const link of links) {
+        for (const link of Array.from(links)) {
           // 元のクリックイベントを無効化
           link.addEventListener('click', e => {
             e.preventDefault()

@@ -304,6 +304,10 @@ v-card(
             .icon-and-text
               v-icon mdi-information
               v-list-item-title このアプリについて
+          v-list-item.item( @click="openURL(env.VUE_APP_WORDPRESS_HOST)" )
+            .icon-and-text
+              v-icon mdi-open-in-new
+              v-list-item-title エノキ電気ニュースを開く
           v-list-item.item( @click="share('https://play.google.com/store/apps/details?id=xyz.enoki.blog.caramelos&hl=ja', 'エノキ電気ニュース')" )
             .icon-and-text
               v-icon mdi-share-variant

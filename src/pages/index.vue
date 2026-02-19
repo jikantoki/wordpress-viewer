@@ -304,105 +304,14 @@ v-card(
             .icon-and-text
               v-icon mdi-information
               v-list-item-title このアプリについて
+          v-list-item.item( @click="openURL(env.VUE_APP_WORDPRESS_HOST)" )
+            .icon-and-text
+              v-icon mdi-open-in-new
+              v-list-item-title エノキ電気ニュースを開く
           v-list-item.item( @click="share('https://play.google.com/store/apps/details?id=xyz.enoki.blog.caramelos&hl=ja', 'エノキ電気ニュース')" )
             .icon-and-text
               v-icon mdi-share-variant
               v-list-item-title このアプリを共有する
-  //-- 投稿ダイアログ --
-  v-dialog(
-    v-model="postDialog"
-    transition="dialog-bottom-transition"
-    fullscreen
-  )
-    v-card(max-width="100%")
-      .top-android-15-or-higher(v-if="settings.hidden.isAndroid15OrHigher")
-      v-card-actions
-        p.ml-2(
-          class="headline"
-          style="font-size: 1.3em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
-          ) {{ viewContents ? viewContents.title.rendered : '投稿' }}
-        v-spacer
-        v-btn(
-          text
-          @click="postDialog = false"
-          icon="mdi-close"
-          )
-      v-card-text(style="height: -webkit-fill-available; overflow-y: auto;")
-        .contents-wrap(
-          style="width: 100%;"
-        )
-          .thumbnail(
-            v-if="viewContents"
-          )
-            img.mb-4(
-              :src="selectThumbnail(viewContents)"
-              style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 16px; cursor: pointer;"
-              )
-          //.test
-            p {{ viewContents }}
-          .category-section.mb-4(
-            v-if="viewContents && viewContents._embedded && viewContents._embedded['wp:term'] && viewContents._embedded['wp:term'][0] && viewContents._embedded['wp:term'][0].length > 0"
-            style="display: flex; flex-wrap: wrap; gap: 0.5em; align-items: center;"
-            )
-            span.text-body-2.opacity05 カテゴリ:
-            v-chip(
-              v-for="cat in viewContents._embedded['wp:term'][0]"
-              :key="cat.id"
-              size="small"
-              @click="filterByCategory(cat); postDialog = false"
-              style="cursor: pointer;"
-              )
-              | {{ cat.name }}
-          .post-contents(
-            v-html="viewContents ? viewContents.content.rendered : ''"
-            style="width: 100%;"
-            )
-          .share-space(
-            style="display: flex; flex-direction: column; align-items: center;"
-          )
-            hr.my-8(
-              style="width: 90%;"
-            )
-            h2 この記事をシェアする
-            p.my-8 この記事がいいなと思ったら、是非シェアをお願いします！
-            .share-btns(
-              style="display: flex; gap: 16px;"
-            )
-              v-btn(
-                icon="mdi-twitter"
-                size="x-large"
-                color="#1DA1F2"
-                @click="openURL(`https://twitter.com/intent/tweet?text=${viewContents.title.rendered} ${viewContents.link}`)"
-              )
-              v-btn(
-                icon="mdi-share-variant"
-                size="x-large"
-                color="rgb(var(--v-theme-primary))"
-                @click="share(viewContents.link, viewContents.title.rendered)"
-              )
-        .ma-16
-  //-- 画像拡大ダイアログ --
-  v-dialog(
-    v-model="imageDialog"
-    max-width="100%"
-    @click:outside="imageDialog = false"
-  )
-    v-card(style="background-color: rgba(0, 0, 0, 0.9);")
-      v-card-actions(style="position: absolute; top: 0; right: 0; z-index: 1;")
-        v-btn(
-          icon="mdi-close"
-          @click="imageDialog = false"
-          color="white"
-        )
-      v-card-text(
-        style="display: flex; justify-content: center; align-items: center; padding: 0;"
-        @click="imageDialog = false"
-      )
-        img(
-          :src="selectedImageUrl"
-          :alt="selectedImageAlt"
-          style="max-width: 100%; max-height: 90vh; object-fit: contain;"
-        )
 </template>
 
 <script lang="ts">
@@ -417,14 +326,6 @@ v-card(
   import { useMyProfileStore } from '@/stores/myProfile'
   import { usePostsStore } from '@/stores/posts'
   import { useSettingsStore } from '@/stores/settings'
-
-  /**
-   * アンカーリンクスクロールの遅延時間（ミリ秒）
-   * 別記事に移動してからアンカー位置にスクロールする際、
-   * DOM更新とレンダリングが完了するまでの待機時間。
-   * 300msは記事コンテンツの読み込みとレンダリングに十分な時間。
-   */
-  const ANCHOR_SCROLL_DELAY = 300
 
   /**
    * WordPressカテゴリの型定義
@@ -465,7 +366,6 @@ v-card(
         posts: usePostsStore(),
         reloadDialog: false,
         loading: false,
-        postDialog: false,
         /** 投稿内容 */
         viewContents: null as any,
         /** 選択中のカテゴリ */
@@ -489,16 +389,6 @@ v-card(
       optionsDialog: {
         handler: async function (dialog: boolean) {
           localStorage.setItem('welcomeDialog', String(dialog))
-        },
-      },
-      /** 投稿ダイアログの表示状態を監視してリンクハンドラを設定 */
-      viewContents: {
-        handler: async function (newContents: any) {
-          if (newContents) {
-            // DOMが更新されるまで待機
-            await this.$nextTick()
-            this.setupPostContentLinkHandlers()
-          }
         },
       },
     },
@@ -563,9 +453,6 @@ v-card(
         } else if (this.optionsDialog) {
           /** オプションダイアログを閉じる */
           this.optionsDialog = false
-        } else if (this.postDialog) {
-          /** 投稿ダイアログを閉じる */
-          this.postDialog = false
         } else if (this.$route.path === '/') {
           /** ルートページならアプリを最小化 */
           App.minimizeApp()
@@ -773,11 +660,6 @@ v-card(
           Toast.show({ text: '最後まで検索しました！' })
         }
       },
-      /** 投稿を表示 */
-      async viewPost (post: any) {
-        this.postDialog = true
-        this.viewContents = post
-      },
       /** カテゴリでフィルタリング */
       async filterByCategory (category: WPCategory) {
         this.selectedCategory = category
@@ -914,7 +796,7 @@ v-card(
               // 少し待ってからスクロール
               setTimeout(() => {
                 this.handleAnchorLink(urlObj.hash)
-              }, ANCHOR_SCROLL_DELAY)
+              }, 0)
               return
             }
             // 同じ記事内のアンカーリンク
@@ -978,11 +860,16 @@ v-card(
           this.loading = false
         }
       },
+      /** 投稿を表示 */
+      async viewPost (post: any) {
+        this.posts.setCurrentPost(post)
+        this.$router.push(`/post/${post.id}`)
+      },
     },
   }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 //scopedだとv-dialog内のスタイルが適用されないため外す
 .right-bottom-buttons {
   position: fixed;
@@ -1128,123 +1015,4 @@ v-card(
     background-color: rgba(var(--v-theme-primary), 0.1);
   }
 }
-
-iframe {
-  max-width: 100%;
-  aspect-ratio: 16 / 9;
-  height: auto;
-  border-radius: 8px;
-  margin: 8px 0;
-}
-
-.post-contents {
-  img {
-    width: 100%!important;
-    min-width: 100%!important;
-    max-width: 100%!important;
-    height: auto;
-    aspect-ratio: 16/9;
-    border-radius: 8px;
-    margin: 8px 0;
-    cursor: pointer;
-  }
-  .ez-toc-counter {
-    margin: 16px;
-  }
-  .wp-block-gallery {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    .wp-block-image {
-      flex: 1;
-      min-width: 33%;
-    }
-  }
-  .wp-block-visual-link-preview-link {
-    border-radius: 8px;
-    border: solid 1px rgba(var(--v-theme-on-surface), 0.3);
-    padding: 8px;
-    margin: 8px 0;
-    display: flex;
-    position: relative;
-    cursor: pointer;
-    a {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 1;
-    }
-    .vlp-link-image{
-      border-radius: 8px;
-      width: 120px;
-      height: 100%;
-      object-fit: cover;
-      margin-right: 8px;
-      img {
-        border-radius: 8px;
-        width: 120px;
-        height: 100%;
-        object-fit: cover;
-        margin-right: 8px;
-      }
-    }
-    .vlp-layout-zone-main {
-      .vlp-link-title {
-        font-size: 1.1em;
-        font-weight: bold;
-        margin-bottom: 4px;
-      }
-      .vlp-link-summary {
-        font-size: 0.9em;
-        color: rgba(var(--v-theme-on-surface), 0.7);
-      }
-    }
-  }
-  a {
-    color: rgb(var(--v-theme-primary));
-  }
-  .wp-block-heading {
-    margin: 16px 0 8px 0;
-  }
-  table {
-    border-collapse: collapse;
-    margin: 16px 0;
-    width: max-content;
-    th, td {
-      border: 1px solid rgba(var(--v-theme-on-surface), 0.3);
-      padding: 8px;
-      text-align: left;
-    }
-    th {
-      background-color: rgba(var(--v-theme-primary), 0.1);
-    }
-  }
-  button.lightbox-trigger {
-    display: none;
-  }
-  figure.wp-block-table {
-    max-width: 100%;
-    width: 100%;
-    overflow-x: auto;
-  }
-  figure.wp-block-gallery {
-    overflow-y: hidden;
-    figure.wp-block-image {
-      min-height: 8em;
-      min-width: 12em;
-      img {
-        aspect-ratio: 16/9;
-        height: 100%;
-        max-width: unset !important;
-        margin: 0;
-      }
-      button {
-        display: none;
-      }
-    }
-  }
-}
-
 </style>

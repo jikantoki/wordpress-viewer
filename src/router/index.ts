@@ -42,6 +42,8 @@ App.addListener('appUrlOpen', function (event: URLOpenListenerEvent) {
   const slug = url.pathname
   if (slug.startsWith('/user/')) {
     router.push(slug)
+  } else if (slug.startsWith('/post/')) {
+    router.push(slug)
   } else if (slug) {
     Browser.open({ url: `https://blog.caramelos.xyz${slug}` })
   } else {

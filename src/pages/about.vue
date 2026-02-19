@@ -51,7 +51,7 @@ v-card(
           v-icon mdi-information-outline
         .text
           p.title バージョン情報
-          p.description v{{ packageJson.version }}
+          p.description v1.0.2
       .setting-item(
         v-if="settings.developerOptions.enabled"
         v-ripple
@@ -136,12 +136,10 @@ v-card(
   import { Device } from '@capacitor/device'
   import { Toast } from '@capacitor/toast'
   import { useSettingsStore } from '@/stores/settings'
-  import PackageJson from '../../package.json'
 
   export default {
     data () {
       return {
-        packageJson: PackageJson,
         developerOptionClickCount: 0,
         settings: useSettingsStore(),
       }

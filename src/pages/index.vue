@@ -11,8 +11,14 @@ v-card(
     .flex(
       style="display: flex; align-items: center;"
     )
-      .text-h5.mx-4 最新記事
+      .text-h5.mx-4 {{ selectedCategory ? selectedCategory.name : '最新記事' }}
       v-spacer
+      v-btn(
+        v-if="selectedCategory"
+        icon="mdi-close"
+        @click="clearCategoryFilter()"
+        title="カテゴリフィルタをクリア"
+      )
       v-btn(
         icon="mdi-reload"
         @click="reload()"
@@ -60,14 +66,18 @@ v-card(
             p.opacity05(
             ) 投稿日: {{ new Date(post.date).toLocaleDateString() }}
         p.description {{ post.excerpt.rendered.replace(/<[^>]+>/g, '').slice(0, 100) }}...
-        //- .category.pa-2
-          span.opacity05 カテゴリ:
-          span.py-2.px-4(
-            v-for="(cat, index) in post._embedded['wp:term'][0]"
+        .category.mt-2(
+          v-if="post._embedded && post._embedded['wp:term'] && post._embedded['wp:term'][0] && post._embedded['wp:term'][0].length > 0"
+          style="display: flex; flex-wrap: wrap; gap: 0.5em;"
+          )
+          v-chip(
+            v-for="cat in post._embedded['wp:term'][0]"
             :key="cat.id"
-            style="background-color: rgba(var(--v-theme-primary), 0.1); border-radius: 8px;"
+            size="small"
+            @click.stop="filterByCategory(cat)"
+            style="cursor: pointer;"
             )
-            | {{ cat.name }}<span v-if="index < post._embedded['wp:term'][0].length - 1">, </span>
+            | {{ cat.name }}
         img.mt-2(
           :src="selectThumbnail(post)"
           style="border-radius: 8px; width: 100%; aspect-ratio: 16/9; object-fit: cover;"
@@ -93,6 +103,18 @@ v-card(
             p.description.mt-2(
               style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
             ) {{ post.excerpt.rendered.replace(/<[^>]+>/g, '').slice(0, 100) }}...
+          .category.mt-2(
+            v-if="post._embedded && post._embedded['wp:term'] && post._embedded['wp:term'][0] && post._embedded['wp:term'][0].length > 0"
+            style="display: flex; flex-wrap: wrap; gap: 0.5em;"
+            )
+            v-chip(
+              v-for="cat in post._embedded['wp:term'][0]"
+              :key="cat.id"
+              size="small"
+              @click.stop="filterByCategory(cat)"
+              style="cursor: pointer;"
+              )
+              | {{ cat.name }}
     //-- もっと見るボタン --
     .text-center.my-4
       v-btn(
@@ -282,6 +304,10 @@ v-card(
             .icon-and-text
               v-icon mdi-information
               v-list-item-title このアプリについて
+          v-list-item.item( @click="openURL(env.VUE_APP_WORDPRESS_HOST)" )
+            .icon-and-text
+              v-icon mdi-open-in-new
+              v-list-item-title エノキ電気ニュースを開く
           v-list-item.item( @click="share('https://play.google.com/store/apps/details?id=xyz.enoki.blog.caramelos&hl=ja', 'エノキ電気ニュース')" )
             .icon-and-text
               v-icon mdi-share-variant
@@ -299,6 +325,15 @@ v-card(
   import { useMyProfileStore } from '@/stores/myProfile'
   import { usePostsStore } from '@/stores/posts'
   import { useSettingsStore } from '@/stores/settings'
+
+  /**
+   * WordPressカテゴリの型定義
+   */
+  interface WPCategory {
+    id: number
+    name: string
+    slug?: string
+  }
 
   export default {
     components: {},
@@ -330,6 +365,10 @@ v-card(
         posts: usePostsStore(),
         reloadDialog: false,
         loading: false,
+        /** 投稿内容 */
+        viewContents: null as any,
+        /** 選択中のカテゴリ */
+        selectedCategory: null as WPCategory | null,
       }
     },
     computed: {
@@ -544,7 +583,15 @@ v-card(
         }
         this.loading = true
         try {
-          const url = `${this.env.VUE_APP_WORDPRESS_HOST}/wp-json/wp/v2/posts?per_page=${count}&offset=${start}`
+          const params = new URLSearchParams({
+            _embed: '1',
+            per_page: count.toString(),
+            offset: start.toString(),
+          })
+          if (this.selectedCategory) {
+            params.append('categories', this.selectedCategory.id.toString())
+          }
+          const url = `${this.env.VUE_APP_WORDPRESS_HOST}/wp-json/wp/v2/posts?${params.toString()}`
           const response = await CapacitorHttp.get({
             url: url,
             method: 'GET',
@@ -569,7 +616,7 @@ v-card(
       async loadNewList (lastUpdatedTime: Date) {
         try {
           this.loading = true
-          const url = `${this.env.VUE_APP_WORDPRESS_HOST}/wp-json/wp/v2/posts?after=${lastUpdatedTime.toISOString()}`
+          const url = `${this.env.VUE_APP_WORDPRESS_HOST}/wp-json/wp/v2/posts?_embed&after=${lastUpdatedTime.toISOString()}`
           const response = await CapacitorHttp.get({
             url: url,
             method: 'GET',
@@ -600,10 +647,10 @@ v-card(
         const list = await this.loadList(this.posts.posts.length, 10)
         // 取得に成功し、データがある場合のみ投稿リストに追加
         // (null = エラー、キャッシュを保持; 空配列 = これ以上の投稿なし、更新しない)
-        if (Array.isArray(list) && list.length > 0) {
+        if (list && list.length > 0) {
           this.posts.posts = nowList.concat(list)
         } else {
-          Toast.show({ text: '最後まで検索しました' })
+          Toast.show({ text: '最後まで検索しました！' })
         }
       },
       /** 投稿を表示 */

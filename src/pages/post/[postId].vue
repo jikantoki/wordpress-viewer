@@ -107,7 +107,7 @@ v-card(
         return this.env?.VUE_APP_WORDPRESS_HOST
       },
       postId (): string {
-        return this.$route.params.postId as string
+        return (this.$route.params as any).postId as string
       },
     },
     watch: {
@@ -184,9 +184,9 @@ v-card(
         }
 
         const links = postContents.querySelectorAll('a')
-        links.forEach((link) => {
+        for (const link of links) {
           // 元のクリックイベントを無効化
-          link.addEventListener('click', (e) => {
+          link.addEventListener('click', e => {
             e.preventDefault()
 
             const href = link.getAttribute('href')
@@ -221,7 +221,7 @@ v-card(
               Browser.open({ url: href })
             }
           })
-        })
+        }
       },
 
       /**
@@ -232,8 +232,9 @@ v-card(
         try {
           // パスから投稿を探す
           const path = url.pathname
-          const apiUrl = `${this.env.VUE_APP_WORDPRESS_HOST}/wp-json/wp/v2/posts?slug=${path.split('/').filter(Boolean).pop()}&_embed`
-          
+          const pathParts = path.split('/').filter(Boolean)
+          const apiUrl = `${this.env.VUE_APP_WORDPRESS_HOST}/wp-json/wp/v2/posts?slug=${pathParts.at(-1)}&_embed`
+
           const response = await CapacitorHttp.get({
             url: apiUrl,
             method: 'GET',
@@ -244,7 +245,7 @@ v-card(
             this.posts.setCurrentPost(post)
             // 投稿ページに遷移
             this.$router.push(`/post/${post.id}`)
-            
+
             // アンカーがある場合は遅延してスクロール
             if (url.hash) {
               setTimeout(() => {
@@ -266,7 +267,8 @@ v-card(
        * @param hash アンカーのハッシュ（#を含む）
        */
       scrollToAnchor (hash: string) {
-        const targetId = hash.substring(1) // #を除去
+        const targetId = hash.slice(1) // #を除去
+        // eslint-disable-next-line unicorn/prefer-query-selector
         const targetElement = document.getElementById(targetId)
         if (targetElement) {
           targetElement.scrollIntoView({ behavior: 'smooth' })
@@ -299,11 +301,11 @@ v-card(
     max-width: 100%;
     height: auto;
   }
-  
+
   ::v-deep(a) {
     color: rgb(var(--v-theme-primary));
     text-decoration: none;
-    
+
     &:hover {
       text-decoration: underline;
     }

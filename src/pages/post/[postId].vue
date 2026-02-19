@@ -98,14 +98,6 @@ v-dialog(
   import { usePostsStore } from '@/stores/posts'
   import { useSettingsStore } from '@/stores/settings'
 
-  /**
-   * アンカーリンクスクロールの遅延時間（ミリ秒）
-   * 別記事に移動してからアンカー位置にスクロールする際、
-   * DOM更新とレンダリングが完了するまでの待機時間。
-   * 300msは記事コンテンツの読み込みとレンダリングに十分な時間。
-   */
-  const ANCHOR_SCROLL_DELAY = 300
-
   export default {
     mixins: [mixins],
     data () {

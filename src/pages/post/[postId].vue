@@ -152,7 +152,6 @@ v-dialog(
       if (!found) {
         console.log('なかった！')
         this.loading = true
-        const apiUrl = `${this.env.VUE_APP_WORDPRESS_HOST}/wp-json/wp/v2/posts?include=${postId}&_embed`
         await this.loadPost()
         this.loading = false
       }
@@ -318,7 +317,27 @@ v-dialog(
         // eslint-disable-next-line unicorn/prefer-query-selector
         const targetElement = document.getElementById(targetId)
         if (targetElement) {
-          targetElement.scrollIntoView({ behavior: 'smooth' })
+          // スクロール可能なコンテナ（v-card-text）を取得
+          const scrollContainer = document.querySelector('.v-card-text')
+          if (scrollContainer) {
+            // ターゲット要素の位置を取得
+            const containerRect = scrollContainer.getBoundingClientRect()
+            const targetRect = targetElement.getBoundingClientRect()
+
+            // 現在のスクロール位置からの相対位置を計算
+            // ヘッダー分のオフセット（約16px）を追加して、ヘッダーの下にコンテンツが見えるようにする
+            const headerOffset = 16
+            const scrollTop = scrollContainer.scrollTop + (targetRect.top - containerRect.top) - headerOffset
+
+            // スムーズスクロール
+            scrollContainer.scrollTo({
+              top: scrollTop,
+              behavior: 'smooth',
+            })
+          } else {
+            // フォールバック：通常のscrollIntoView
+            targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }
         }
       },
 

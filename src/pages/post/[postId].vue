@@ -202,8 +202,17 @@ v-card(
               if (url.hostname === blogUrl.hostname) {
                 // アンカーリンクのチェック
                 if (url.hash) {
+                  // url.pathnameは /[categoryName]/[postSlug] 形式で、window.location.pathnameは /post/[postId] 形式なので、単純な比較では同一ページ内のアンカーリンクを判定できない
+                  console.log(url.pathname, window.location.pathname)
+
+                  /** 今いるページがWebだった場合のURLを取得 */
+                  const currentUrl = this.viewContents.link
+
+                  /** ブログのホストとジャンプ先のURLのパスを組み合わせて、今いるページがWeb上でどのURLになるかを算出 */
+                  const jumpToPath = `${this.env.VUE_APP_WORDPRESS_HOST}${url.pathname}`
+
                   // 同じページ内のアンカーへのジャンプ
-                  if (url.pathname === window.location.pathname) {
+                  if (jumpToPath === currentUrl) {
                     this.scrollToAnchor(url.hash)
                   } else {
                     // 別記事へのアンカーリンク
@@ -232,12 +241,14 @@ v-card(
        * @param url リンク先のURL
        */
       async handleInternalLink (url: URL) {
+        this.loading = true
         try {
           // パスから投稿を探す
           const path = url.pathname
           const pathParts = path.split('/').filter(Boolean)
           const apiUrl = `${this.env.VUE_APP_WORDPRESS_HOST}/wp-json/wp/v2/posts?slug=${pathParts.at(-1)}&_embed`
 
+          console.log('Scrolling to anchor:')
           const response = await CapacitorHttp.get({
             url: apiUrl,
             method: 'GET',
@@ -253,7 +264,7 @@ v-card(
             if (url.hash) {
               setTimeout(() => {
                 this.scrollToAnchor(url.hash)
-              }, ANCHOR_SCROLL_DELAY)
+              }, 0)
             }
           } else {
             // 投稿が見つからない場合はブラウザで開く
@@ -263,6 +274,7 @@ v-card(
           console.error('Failed to handle internal link:', error)
           Browser.open({ url: url.toString() })
         }
+        this.loading = false
       },
 
       /**
@@ -313,5 +325,9 @@ v-card(
       text-decoration: underline;
     }
   }
+}
+
+h2 {
+  scroll-margin: 80px; /* アンカーリンクでスクロールしたときの余白 */
 }
 </style>

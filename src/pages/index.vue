@@ -880,4 +880,15 @@ iframe {
   }
 }
 
+#ez-toc-container {
+  .ez-toc-cssicon-toggle-label {
+    display: none;
+  }
+  input[type="checkbox"] {
+    display: none;
+  }
+  .ez-toc-list-level-3 {
+    padding-left: 1.5em;
+  }
+}
 </style>

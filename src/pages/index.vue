@@ -286,64 +286,6 @@ v-card(
             .icon-and-text
               v-icon mdi-share-variant
               v-list-item-title このアプリを共有する
-  //-- 投稿ダイアログ --
-  v-dialog(
-    v-model="postDialog"
-    transition="dialog-bottom-transition"
-    fullscreen
-  )
-    v-card(max-width="100%")
-      .top-android-15-or-higher(v-if="settings.hidden.isAndroid15OrHigher")
-      v-card-actions
-        p.ml-2(
-          class="headline"
-          style="font-size: 1.3em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
-          ) {{ viewContents ? viewContents.title.rendered : '投稿' }}
-        v-spacer
-        v-btn(
-          text
-          @click="postDialog = false"
-          icon="mdi-close"
-          )
-      v-card-text(style="height: -webkit-fill-available; overflow-y: auto;")
-        .contents-wrap(
-          style="width: 100%;"
-        )
-          .thumbnail(
-            v-if="viewContents"
-          )
-            img.mb-4(
-              :src="selectThumbnail(viewContents)"
-              style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 16px; cursor: pointer;"
-              )
-          .post-contents(
-            v-html="viewContents ? viewContents.content.rendered : ''"
-            style="width: 100%;"
-            )
-          .share-space(
-            style="display: flex; flex-direction: column; align-items: center;"
-          )
-            hr.my-8(
-              style="width: 90%;"
-            )
-            h2 この記事をシェアする
-            p.my-8 この記事がいいなと思ったら、是非シェアをお願いします！
-            .share-btns(
-              style="display: flex; gap: 16px;"
-            )
-              v-btn(
-                icon="mdi-twitter"
-                size="x-large"
-                color="#1DA1F2"
-                @click="openURL(`https://twitter.com/intent/tweet?text=${viewContents.title.rendered} ${viewContents.link}`)"
-              )
-              v-btn(
-                icon="mdi-share-variant"
-                size="x-large"
-                color="rgb(var(--v-theme-primary))"
-                @click="share(viewContents.link, viewContents.title.rendered)"
-              )
-        .ma-16
 </template>
 
 <script lang="ts">
@@ -351,21 +293,12 @@ v-card(
   import { Browser } from '@capacitor/browser'
   import { CapacitorHttp } from '@capacitor/core'
 
-  import { Share } from '@capacitor/share'
   import { Toast } from '@capacitor/toast'
   // @ts-ignore
   import mixins from '@/mixins/mixins'
   import { useMyProfileStore } from '@/stores/myProfile'
   import { usePostsStore } from '@/stores/posts'
   import { useSettingsStore } from '@/stores/settings'
-
-  /**
-   * アンカーリンクスクロールの遅延時間（ミリ秒）
-   * 別記事に移動してからアンカー位置にスクロールする際、
-   * DOM更新とレンダリングが完了するまでの待機時間。
-   * 300msは記事コンテンツの読み込みとレンダリングに十分な時間。
-   */
-  const ANCHOR_SCROLL_DELAY = 300
 
   export default {
     components: {},
@@ -397,9 +330,6 @@ v-card(
         posts: usePostsStore(),
         reloadDialog: false,
         loading: false,
-        postDialog: false,
-        /** 投稿内容 */
-        viewContents: null as any,
       }
     },
     computed: {
@@ -413,16 +343,6 @@ v-card(
       optionsDialog: {
         handler: async function (dialog: boolean) {
           localStorage.setItem('welcomeDialog', String(dialog))
-        },
-      },
-      /** 投稿ダイアログの表示状態を監視してリンクハンドラを設定 */
-      viewContents: {
-        handler: async function (newContents: any) {
-          if (newContents) {
-            // DOMが更新されるまで待機
-            await this.$nextTick()
-            this.setupPostContentLinkHandlers()
-          }
         },
       },
     },
@@ -487,9 +407,6 @@ v-card(
         } else if (this.optionsDialog) {
           /** オプションダイアログを閉じる */
           this.optionsDialog = false
-        } else if (this.postDialog) {
-          /** 投稿ダイアログを閉じる */
-          this.postDialog = false
         } else if (this.$route.path === '/') {
           /** ルートページならアプリを最小化 */
           App.minimizeApp()
@@ -691,173 +608,8 @@ v-card(
       },
       /** 投稿を表示 */
       async viewPost (post: any) {
-        this.postDialog = true
-        this.viewContents = post
-      },
-      /** シェアダイアログ */
-      async share (content: string, title = '') {
-        console.log(this.viewContents)
-        await Share.share({
-          url: content,
-          title: title,
-        })
-      },
-      /**
-       * 投稿コンテンツ内のリンクにイベントハンドラを設定
-       * 同じドメイン内のリンクはアプリ内で開き、外部リンクはブラウザで開く
-       */
-      setupPostContentLinkHandlers () {
-        const postContents = document.querySelector('.post-contents')
-        if (!postContents) return
-
-        let blogUrl: URL
-        try {
-          blogUrl = new URL(this.blogHost)
-        } catch (error) {
-          console.error('Invalid WordPress host URL:', this.blogHost, error)
-          return
-        }
-
-        const links = postContents.querySelectorAll('a')
-
-        for (const link of Array.from(links)) {
-          // すでにハンドラが設定されている場合はスキップ
-          if (link.dataset.handlerSet === 'true') continue
-          link.dataset.handlerSet = 'true'
-
-          link.addEventListener('click', async event => {
-            event.preventDefault()
-            event.stopPropagation()
-
-            const href = link.getAttribute('href')
-            if (!href) return
-
-            // アンカーリンク（#で始まる）の場合
-            if (href.startsWith('#')) {
-              this.handleAnchorLink(href)
-              return
-            }
-
-            try {
-              const linkUrl = new URL(href, this.blogHost)
-
-              // 同じドメインかチェック
-              // eslint-disable-next-line unicorn/prefer-ternary
-              if (linkUrl.hostname === blogUrl.hostname) {
-                // 同じドメイン内のリンク
-                await this.handleSameDomainLink(linkUrl.href)
-              } else {
-                // 外部リンク
-                await this.openURL(href)
-              }
-            } catch (error) {
-              console.error('リンク処理エラー:', error)
-              await this.openURL(href)
-            }
-          })
-        }
-      },
-      /**
-       * アンカーリンクを処理してスムーズにスクロール
-       * @param hash アンカー（例: #section-id）
-       */
-      handleAnchorLink (hash: string) {
-        const targetId = hash.slice(1) // #を除去
-        // eslint-disable-next-line unicorn/prefer-query-selector
-        const targetElement = document.getElementById(targetId)
-
-        if (targetElement) {
-          targetElement.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start',
-          })
-        }
-      },
-      /**
-       * 同じドメイン内のリンクを処理
-       * @param url 完全なURL
-       */
-      async handleSameDomainLink (url: string) {
-        try {
-          const urlObj = new URL(url)
-
-          // アンカー部分がある場合
-          if (urlObj.hash) {
-            // まず記事コンテンツを取得/表示してからスクロール
-            const pathname = urlObj.pathname
-            const currentPath = this.viewContents?.link ? new URL(this.viewContents.link).pathname : ''
-
-            const isSameArticle = pathname === currentPath
-
-            if (!isSameArticle) {
-              // 別の記事へのアンカーリンク
-              await this.loadAndViewPostByUrl(url)
-              // 少し待ってからスクロール
-              setTimeout(() => {
-                this.handleAnchorLink(urlObj.hash)
-              }, ANCHOR_SCROLL_DELAY)
-              return
-            }
-            // 同じ記事内のアンカーリンク
-            this.handleAnchorLink(urlObj.hash)
-          } else {
-            // アンカーなしの同じドメインリンク
-            await this.loadAndViewPostByUrl(url)
-          }
-        } catch (error) {
-          console.error('同じドメインリンクの処理エラー:', error)
-          Toast.show({ text: '記事の読み込みに失敗しました' })
-        }
-      },
-      /**
-       * URLから記事を読み込んで表示
-       * @param url 記事のURL
-       */
-      async loadAndViewPostByUrl (url: string) {
-        try {
-          // まずローカルストアから同じURLの記事を探す
-          const existingPost = this.posts.posts.find((p: any) => p.link === url)
-
-          if (existingPost) {
-            // ローカルに存在する場合はそれを表示
-            this.viewContents = existingPost
-            return
-          }
-
-          // ローカルに存在しない場合はAPIから取得
-          // URLからスラッグを抽出（最後のパス部分）
-          const urlObj = new URL(url)
-          const pathParts = urlObj.pathname.split('/').filter(Boolean)
-          const slug = pathParts.at(-1)
-
-          if (!slug) {
-            throw new Error(`Invalid URL: no slug found in ${url}`)
-          }
-
-          // WordPressのREST APIでスラッグから記事を検索
-          const apiUrl = `${this.blogHost}/wp-json/wp/v2/posts?slug=${slug}`
-
-          this.loading = true
-          const response = await CapacitorHttp.get({
-            url: apiUrl,
-            method: 'GET',
-          })
-
-          if (response.data && response.data.length > 0) {
-            const post = response.data[0]
-            // ストアに追加
-            this.posts.posts.unshift(post)
-            // 表示
-            this.viewContents = post
-          } else {
-            throw new Error('Post not found')
-          }
-        } catch (error) {
-          console.error('記事の読み込みエラー:', error)
-          Toast.show({ text: '記事の読み込みに失敗しました' })
-        } finally {
-          this.loading = false
-        }
+        this.posts.setCurrentPost(post)
+        this.$router.push(`/post/${post.id}`)
       },
     },
   }

@@ -115,6 +115,12 @@ v-card(
           this.setupPostContentLinkHandlers()
         })
       },
+      postId (newPostId, oldPostId) {
+        // 投稿IDが変わったら新しい投稿を読み込む
+        if (newPostId !== oldPostId) {
+          this.loadPost()
+        }
+      },
     },
     mounted () {
       // Piniaストアから投稿を取得

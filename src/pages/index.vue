@@ -707,7 +707,7 @@ v-card(
 
         const links = postContents.querySelectorAll('a')
 
-        for (const link of links) {
+        for (const link of Array.from(links)) {
           // すでにハンドラが設定されている場合はスキップ
           if (link.dataset.handlerSet === 'true') continue
           link.dataset.handlerSet = 'true'
@@ -1034,7 +1034,16 @@ iframe {
     padding: 8px;
     margin: 8px 0;
     display: flex;
+    position: relative;
     cursor: pointer;
+    a {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
     .vlp-link-image{
       border-radius: 8px;
       width: 120px;

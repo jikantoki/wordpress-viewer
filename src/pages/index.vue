@@ -402,6 +402,15 @@ v-card(
    */
   const ANCHOR_SCROLL_DELAY = 300
 
+  /**
+   * WordPressカテゴリの型定義
+   */
+  interface WPCategory {
+    id: number
+    name: string
+    slug?: string
+  }
+
   export default {
     components: {},
     mixins: [mixins],
@@ -436,7 +445,7 @@ v-card(
         /** 投稿内容 */
         viewContents: null as any,
         /** 選択中のカテゴリ */
-        selectedCategory: null as any,
+        selectedCategory: null as WPCategory | null,
       }
     },
     computed: {
@@ -664,10 +673,15 @@ v-card(
         }
         this.loading = true
         try {
-          let url = `${this.env.VUE_APP_WORDPRESS_HOST}/wp-json/wp/v2/posts?_embed&per_page=${count}&offset=${start}`
+          const params = new URLSearchParams({
+            _embed: '1',
+            per_page: count.toString(),
+            offset: start.toString(),
+          })
           if (this.selectedCategory) {
-            url += `&categories=${this.selectedCategory.id}`
+            params.append('categories', this.selectedCategory.id.toString())
           }
+          const url = `${this.env.VUE_APP_WORDPRESS_HOST}/wp-json/wp/v2/posts?${params.toString()}`
           const response = await CapacitorHttp.get({
             url: url,
             method: 'GET',
@@ -735,7 +749,7 @@ v-card(
         this.viewContents = post
       },
       /** カテゴリでフィルタリング */
-      async filterByCategory (category: any) {
+      async filterByCategory (category: WPCategory) {
         this.selectedCategory = category
         await this.reload()
       },

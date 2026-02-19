@@ -370,12 +370,6 @@ v-card(
         viewContents: null as any,
         /** 選択中のカテゴリ */
         selectedCategory: null as WPCategory | null,
-        /** 画像拡大ダイアログの表示フラグ */
-        imageDialog: false,
-        /** 選択された画像のURL */
-        selectedImageUrl: '' as string,
-        /** 選択された画像のalt属性 */
-        selectedImageAlt: '' as string,
       }
     },
     computed: {
@@ -729,31 +723,6 @@ v-card(
             } catch (error) {
               console.error('リンク処理エラー:', error)
               await this.openURL(href)
-            }
-          })
-        }
-
-        // 画像にクリックハンドラを設定
-        const images = postContents.querySelectorAll('img')
-
-        for (const img of Array.from(images)) {
-          // すでにハンドラが設定されている場合はスキップ
-          if (img.dataset.handlerSet === 'true') continue
-          img.dataset.handlerSet = 'true'
-
-          // 画像をクリック可能にするスタイル設定
-          img.style.cursor = 'pointer'
-
-          img.addEventListener('click', event => {
-            event.preventDefault()
-            event.stopPropagation()
-
-            const src = img.getAttribute('src')
-            const alt = img.getAttribute('alt') || ''
-            if (src) {
-              this.selectedImageUrl = src
-              this.selectedImageAlt = alt
-              this.imageDialog = true
             }
           })
         }

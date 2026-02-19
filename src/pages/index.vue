@@ -401,8 +401,7 @@ v-card(
         img(
           :src="selectedImageUrl"
           :alt="selectedImageAlt"
-          style="max-width: 100%; max-height: 90vh; object-fit: contain; cursor: zoom-out;"
-          @click.stop="imageDialog = false"
+          style="max-width: 100%; max-height: 90vh; object-fit: contain;"
         )
 </template>
 

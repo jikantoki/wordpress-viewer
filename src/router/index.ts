@@ -41,22 +41,16 @@ router.isReady().then(() => {
 /**
  * 投稿のスラッグからIDを取得する
  * @param slug 投稿のスラッグ
+ * @param wordpressHost WordPressホストURL
  * @returns 投稿ID、見つからなければnull
  */
-async function getPostIdBySlug (slug: string): Promise<number | null> {
+async function getPostIdBySlug (slug: string, wordpressHost: string): Promise<number | null> {
   try {
-    const wordpressHost = import.meta.env.VUE_APP_WORDPRESS_HOST
-    if (!wordpressHost) {
-      console.error('VUE_APP_WORDPRESS_HOST is not defined')
-      return null
-    }
-
     const apiUrl = `${wordpressHost}/wp-json/wp/v2/posts?slug=${slug}&_embed`
     console.log('Fetching post by slug:', apiUrl)
 
     const response = await CapacitorHttp.get({
       url: apiUrl,
-      method: 'GET',
     })
 
     if (response.data && response.data.length > 0) {
@@ -103,15 +97,21 @@ App.addListener('appUrlOpen', async function (event: URLOpenListenerEvent) {
       }
       console.log('Extracted slug:', slug)
 
+      if (!wordpressHost) {
+        console.error('VUE_APP_WORDPRESS_HOST is not defined')
+        Toast.show({ text: 'WordPress ホストが設定されていません。' })
+        return
+      }
+
       // スラッグからpost IDを取得
-      const postId = await getPostIdBySlug(slug)
+      const postId = await getPostIdBySlug(slug, wordpressHost)
 
       if (postId) {
         // 投稿ページに遷移
         router.push(`/post/${postId}`)
       } else {
         // 投稿が見つからない場合はブラウザで開く
-        const fullUrl = wordpressHost ? `${wordpressHost}${pathname}` : event.url
+        const fullUrl = `${wordpressHost}${pathname}`
         Browser.open({ url: fullUrl })
       }
     } else {

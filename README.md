@@ -1,339 +1,381 @@
-# Capacitor Template
+# WordPress Viewer
 
-Androidアプリ用のパッケージ群
+WordPressのブログ記事を閲覧するためのモバイルアプリケーション
 
 <img src="./public/icon.png" width="256px" alt="アイコン">
 
-[最新版ダウンロード](https://raw.githubusercontent.com/jikantoki/capacitor-template/refs/heads/main/app-release.apk)
+[最新版ダウンロード](https://raw.githubusercontent.com/jikantoki/wordpress-viewer/refs/heads/main/app-release.apk)
 
-## 機能仕様
+## 概要
 
-/.env ファイルに以下の内容を記述すると、WordpressのREST APIを呼び出せる
+このアプリケーションは、WordPress REST APIを利用してブログ記事を閲覧するためのネイティブAndroidアプリです。Vue 3とCapacitorを使用して開発されており、モダンなUI/UXを提供します。
 
-```env
-# Wordpressが存在するサーバー
-VUE_APP_WORDPRESS_HOST=
+### 主な特徴
+
+- **WordPress REST API統合**: 任意のWordPressサイトと接続可能
+- **ネイティブアプリ体験**: Capacitorによるネイティブアプリとして動作
+- **高速な記事閲覧**: 最適化されたレンダリングとキャッシング
+- **ディープリンク対応**: 外部リンクからの直接記事表示
+- **レスポンシブデザイン**: Vuetifyによる美しいマテリアルデザイン
+
+## 機能一覧
+
+### 実装済み機能
+
+- ✅ **記事一覧表示**: 最新記事の一覧表示（カード表示/コンパクト表示の切り替え可能）
+- ✅ **記事詳細表示**: 記事本文、サムネイル画像、シェア機能
+- ✅ **カテゴリフィルタ**: カテゴリ別の記事絞り込み
+- ✅ **記事検索**: タイトルや本文からの検索
+- ✅ **画像拡大表示**: 記事内の画像をタップして拡大表示
+- ✅ **シェア機能**: TwitterやネイティブShare APIを使った記事共有
+- ✅ **ディープリンク**: 外部URLからアプリ内記事への直接遷移
+- ✅ **オフライン対応**: Piniaによる状態管理とキャッシング
+- ✅ **ダークモード**: ライト/ダークテーマの切り替え
+- ✅ **表示設定**: リスト表示形式のカスタマイズ
+
+### 今後実装予定の機能
+
+- 🔲 **ログイン機能**: WordPressユーザー認証
+- 🔲 **ブックマーク機能**: お気に入り記事の保存と管理
+- 🔲 **コメント機能**: 記事へのコメント投稿と閲覧
+- 🔲 **プッシュ通知**: 新着記事の通知
+- 🔲 **オフライン閲覧**: 記事の完全オフライン保存
+
+## 技術スタック
+
+### フロントエンド
+
+- **Vue 3**: プログレッシブJavaScriptフレームワーク
+- **Vuetify 3**: マテリアルデザインコンポーネントライブラリ
+- **TypeScript**: 型安全な開発環境
+- **Pinia**: Vue 3公式推奨の状態管理ライブラリ
+- **Vue Router**: SPAルーティング
+
+### ビルドツール
+
+- **Vite**: 高速な開発サーバーとビルドツール
+- **Capacitor**: ネイティブアプリ化フレームワーク
+
+### テンプレートエンジン・スタイリング
+
+- **Pug**: HTML テンプレートエンジン
+- **SASS**: CSS プリプロセッサ
+
+## プロジェクト構成
+
+```
+wordpress-viewer/
+├── src/
+│   ├── pages/           # ページコンポーネント（ルーティング）
+│   │   ├── index.vue           # トップページ（記事一覧）
+│   │   ├── post/
+│   │   │   └── [postId].vue    # 記事詳細ページ
+│   │   ├── about.vue           # アプリについて
+│   │   ├── settings/           # 設定ページ群
+│   │   └── ...
+│   ├── components/      # 再利用可能なコンポーネント
+│   │   └── common/             # 共通コンポーネント
+│   ├── stores/          # Pinia ストア（状態管理）
+│   │   ├── posts.ts            # 記事データ管理
+│   │   ├── settings.ts         # アプリ設定
+│   │   └── myProfile.ts        # ユーザープロフィール
+│   ├── router/          # Vue Router設定
+│   │   └── index.ts            # ルーティング定義
+│   ├── mixins/          # Vue mixins
+│   ├── js/              # ユーティリティ関数
+│   ├── styles/          # グローバルスタイル
+│   └── App.vue          # ルートコンポーネント
+├── android/             # Android ネイティブプロジェクト
+├── public/              # 静的ファイル
+├── capacitor.config.ts  # Capacitor設定
+└── vite.config.mts      # Vite設定
 ```
 
-## テストデータ
+## ルーティングの仕組み
 
-テストは以下のサーバーを通じて行うこと
+このアプリケーションは`unplugin-vue-router`を使用した自動ルーティングを採用しています。
+
+### ルート定義
+
+`src/pages/` ディレクトリ内のファイル構造が自動的にルートに変換されます：
+
+| ファイルパス | ルート | 説明 |
+|------------|--------|------|
+| `pages/index.vue` | `/` | トップページ（記事一覧） |
+| `pages/post/[postId].vue` | `/post/:postId` | 記事詳細ページ（動的ルート） |
+| `pages/about.vue` | `/about` | アプリについて |
+| `pages/settings/index.vue` | `/settings` | 設定トップ |
+| `pages/settings/profile.vue` | `/settings/profile` | プロフィール設定 |
+
+### ディープリンク対応
+
+外部URLからアプリを起動できるディープリンク機能を実装しています（`src/router/index.ts`）：
+
+1. **アプリ内ルート形式**: `/post/:postId` または `/user/:userId` 形式でアプリ内の該当ページに遷移
+2. **WordPress記事URL形式**: `https://{WORDPRESS_HOST}/category/post-slug` 形式の場合、スラッグから記事IDを取得して記事詳細ページに遷移
+3. **フォールバック**: 記事が見つからない場合は外部ブラウザで開く
+
+### ページ遷移の流れ
+
+1. **記事一覧 → 記事詳細**
+   - ユーザーが記事をタップ
+   - Piniaストアに記事データを保存
+   - `/post/:postId` に遷移
+   - 記事詳細ページで WordPress REST API から完全な記事データを取得
+
+2. **カテゴリフィルタ**
+   - カテゴリチップをタップ
+   - 同じページ内でフィルタリング条件を更新
+   - WordPress REST API に `categories` パラメータを追加してリクエスト
+
+## 環境設定
+
+### 必要な環境
+
+- Node.js (v18以上推奨)
+- npm, yarn, または pnpm
+- Android Studio (Androidアプリビルド時)
+- PHP Composer (PHP機能使用時、オプション)
+
+### 環境変数の設定
+
+プロジェクトルートに `.env` ファイルを作成し、以下の内容を記述してください：
 
 ```env
-# エノキ電気ニュースのURL
+# WordPress サーバーのURL（必須）
+VUE_APP_WORDPRESS_HOST=https://blog.caramelos.xyz
+
+# WebPush用の公開鍵・秘密鍵（オプション、今後の機能で使用）
+VUE_APP_WEBPUSH_PUBLICKEY=your-public-key
+VUE_APP_WEBPUSH_PRIVATEKEY=your-private-key
+
+# API設定（オプション、将来の機能拡張用）
+VUE_APP_API_ID=default
+VUE_APP_API_TOKEN=your-api-token
+VUE_APP_API_ACCESSKEY=your-access-key
+VUE_APP_API_HOST=your-api-host
+```
+
+### テスト用設定
+
+開発・テスト時は以下の設定を使用できます：
+
+```env
+# エノキ電気ニュースのURL（デモ用）
 VUE_APP_WORDPRESS_HOST=https://blog.caramelos.xyz
 ```
 
-## Nuxt4 Template
 
-Nuxt を簡単にインストールしてすぐ使うためのテンプレート
+## セットアップ手順
 
-- NOLICENSED ご自由にお使いください
+### 1. リポジトリのクローン
 
-## 前提
-
-Node.js と npm と yarn くらい入ってるよね！（投げやり）
-デプロイ先は Vercel を想定してるけど多分どこでも動きます
-あと PHP の composer も用意してね
-
-## INCLUDED
-
-- Vue CLI Service
-- Vue3
-- Vuetify3
-- Vuetify ダークテーマ
-- Nuxt4
-- Vue-router
-- VSCode、Git、Eslint、Prettier 周りの設定ファイル
-- Pug と SASS
-- PWA Preset
-- Google Fonts
-- Vue Content Loader
-
-## 独自実装
-
-- Cookie API
-- Ajax API
-- 画面を右スワイプでメニュー表示
-- イイカンジにカスタマイズされた SCSS ファイル
-- コピペで使える pug テンプレート
-- 汎用性の高い関数群
-- ダークテーマ切り替えボタン
-- Push API（使いやすいように改良）
-- Notification API（使いやすいように改良）
-- アカウント登録時のメールアドレス認証、アクセストークンの発行
-- MySQL 用 API
-
-## 制作予定
-
-- リッチエディタ
-
-## 注意
-
-ポート 12345 で動くようにしてあります  
-VSCode での利用を推奨
-
-~~Vue3 慣れてなくて Options API 使ってるけど許して~~
-
-## 参考資料
-
-WebPush <https://tech.excite.co.jp/entry/2021/06/30/104213>
-
-## Setup
-
-このプログラムは、表示用サーバーと処理用サーバーの 2 つが必要です
-
-### 表示用サーバー
-
-```shell
-git clone git@github.com:jikantoki/nuxt4temp.git
-echo 'これだけでセットアップ完了！'
-echo 'Vercelとかでデプロイしたらそのまま動く'
+```bash
+git clone https://github.com/jikantoki/wordpress-viewer.git
+cd wordpress-viewer
 ```
 
-### WebPush 用の鍵を作成
+### 2. 依存パッケージのインストール
 
-ここで作れます <https://web-push-codelab.glitch.me/>
+```bash
+# npmの場合
+npm install
 
-#### ストレージを操作できる環境の場合
+# yarnの場合
+yarn install
 
-ルートに.env ファイルを作成し、以下のように記述（クォーテーション不要）
+# pnpmの場合
+pnpm install
+```
+
+### 3. 環境変数の設定
+
+プロジェクトルートに `.env` ファイルを作成し、WordPressサーバーのURLを設定：
 
 ```env
-VUE_APP_WEBPUSH_PUBLICKEY=パブリックキーをコピー
-VUE_APP_WEBPUSH_PRIVATEKEY=プライベートキーをコピー
-
-VUE_APP_API_ID=default
-VUE_APP_API_TOKEN=後のPHPで作成するアクセストークン
-VUE_APP_API_ACCESSKEY=後のPHPで作成するアクセスキー
-
-VUE_APP_API_HOST=APIサーバーのホスト
+VUE_APP_WORDPRESS_HOST=https://your-wordpress-site.com
 ```
 
-#### それ以外（Vercel デプロイ等）
+### 4. 開発サーバーの起動
 
-Project Settings → Enviroment Variables を開く  
-上記.env ファイルと同じ感じで設定
+```bash
+# npmの場合
+npm run dev
 
-### PHP サーバー（内部処理用）
+# yarnの場合
+yarn dev
 
-サーバーサイドは PHP で開発しているため、一部処理を実行するには PHP サーバーの用意が必要です  
-とりあえずレンタルサーバーでも借りれば実行できます
+# pnpmの場合
+pnpm dev
+```
 
-1. API 用のドメインをクライアント側（Vercel 等）とは別で用意する
-2. このリポジトリの php フォルダをドメインのルートにする（.htaccess 等で）
-3. （準備中！！！）に API 用のドメインを記述
-4. リポジトリルート直下に/env.php を用意し、以下の記述をする
+ブラウザで `http://localhost:3000` にアクセスしてアプリケーションを確認できます。
+
+## ビルドと実行
+
+### Webアプリとしてビルド
+
+```bash
+# 本番用ビルド
+npm run build
+
+# ビルド結果のプレビュー
+npm run preview
+```
+
+ビルド成果物は `dist/` ディレクトリに出力されます。
+
+### Androidアプリとしてビルド
+
+#### 前提条件
+- Android Studio がインストールされていること
+- Android SDK が設定されていること
+
+#### ビルド手順
+
+1. **Webアプリをビルド**
+```bash
+npm run build
+```
+
+2. **Capacitorで同期**
+```bash
+npx cap sync android
+```
+
+3. **Android Studioで開く**
+```bash
+npx cap open android
+```
+
+4. Android Studioでビルドして実行
+
+#### リリースビルド（APK/AAB）
+
+Android Studioから:
+1. `Build` > `Generate Signed Bundle / APK` を選択
+2. キーストアを設定（初回のみ）
+3. `release` ビルドバリアントを選択
+4. APKまたはAAB形式を選択してビルド
+
+## 開発ガイド
+
+### コード品質チェック
+
+```bash
+# ESLintによるコードチェック
+npm run lint
+
+# TypeScript型チェック
+npm run type-check
+```
+
+### ディレクトリ別の役割
+
+- **`src/pages/`**: ページコンポーネント。ファイル名がそのままルートになります
+- **`src/components/`**: 再利用可能なVueコンポーネント
+- **`src/stores/`**: Piniaストア。アプリケーション全体の状態を管理
+- **`src/router/`**: ルーティング設定とディープリンク処理
+- **`src/mixins/`**: Vue mixins。複数のコンポーネントで共有するロジック
+- **`src/styles/`**: グローバルSCSS/SASSファイル
+
+### 新しいページの追加方法
+
+1. `src/pages/` に新しい `.vue` ファイルを作成
+2. ファイル名がルートパスになります
+   - 例: `src/pages/news.vue` → `/news`
+   - 動的ルート: `src/pages/category/[id].vue` → `/category/:id`
+
+### WordPress REST APIの利用
+
+記事データを取得する例：
+
+```typescript
+const response = await CapacitorHttp.get({
+  url: `${env.VUE_APP_WORDPRESS_HOST}/wp-json/wp/v2/posts?_embed`,
+})
+const posts = response.data
+```
+
+`_embed` パラメータを付けることで、カテゴリ情報やアイキャッチ画像などの関連データも取得できます。
+
+## WordPress 側の設定
+
+### 必要な設定
+
+このアプリを使用するには、WordPress側で REST API が有効になっている必要があります。
+WordPress 4.7以降ではデフォルトで有効化されています。
+
+### CORS設定（必要に応じて）
+
+異なるドメインからアクセスする場合、WordPress側でCORS設定が必要な場合があります。
+`.htaccess` または `wp-config.php` に以下を追加：
 
 ```php
-<?php
-define('DIRECTORY_NAME', '/プロジェクトルートのディレクトリ名');
-
-define('VUE_APP_WebPush_PublicKey', 'パブリックキー');
-define('VUE_APP_WebPush_PrivateKey', 'プライベートキー');
-define('WebPush_URL', 'プッシュ通知を使うドメイン');
-define('WebPush_URL_dev', 'プッシュ通知を使うドメイン（開発用）');//この行は無くても良い
-define('WebPush_icon', 'プッシュ通知がスマホに届いたときに表示するアイコンURL');
-define('Default_user_icon', 'アイコン未設定アカウント用の初期アイコンURL');
-
-define('MySQL_Host', 'MySQLサーバー');
-define('MySQL_DBName', 'DB名');
-define('MySQL_User', 'DB操作ユーザー名');
-define('MySQL_Password', 'DBパスワード');
-
-define('SMTP_Name', '自動メール送信時の差出名');
-define('SMTP_Username', 'SMTPユーザー名');
-define('SMTP_Mailaddress', '送信に使うメールアドレス');
-define('SMTP_Password', 'SMTPパスワード');
-define('SMTP_Server', 'SMTPサーバー');
-define('SMTP_Port', 587); //基本は587を使えば大丈夫
-
-$mailHeader = "<p>
-いつも Capacitor Template をご利用いただきありがとうございます。
-<hr>
-</p>";
-$mailFooter = "<p>
-<hr>
-このメールに返信することはできません。
-<br>
-また、このメールに身に覚えのない場合は、エノキ電気までお問い合わせください。
-<br>
-<a href=\"https://enoki.xyz\">Capacitor Template</a> by <a href=\"https://enoki.xyz\">エノキ電気</a>
-</p>";
-
+// wp-config.php に追加
+header("Access-Control-Allow-Origin: *");
 ```
 
-#### PHP サーバー用の.htaccess の用意
-
-大体こんな感じで設定する
-
-```htaccess
-#トップページを/capacitor-template/php にする
-<IfModule mod_rewrite.c>
-RewriteEngine on
-RewriteBase /
-RewriteRule ^$ capacitor-template/php/ [L]
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.+)$ capacitor-template/php/$1 [L]
-</IfModule>
-# 外部からのAPIへのアクセスを許可
-Header append Access-Control-Allow-Origin: "*"
-
-```
-
-### MySQL の用意
-
-#### /database.sql ファイルをインポートする
-
-PHPMyAdmin が使える環境なら DB 直下にインポートして終わり、コマンドラインでやる方法は知らん
-
-#### ※インポートでエラーが出たら
-
-/database_VIEW.sql の中身をコピーして phpmyadmin で直接実行
-
-### デフォルト API のトークンを用意する
-
-このプログラムは独自のアクセストークンを利用して API にアクセスします。  
-そのため、初回 API を登録する作業が必要です。
-
-1. セットアップした API 用サーバーの/makeApiForAdmin.php にアクセス
-2. 初回アクセス時のみ MySQL で登録作業が行われるので、出てきた画面の内容をコピー
-3. .env にｲｲｶﾝｼﾞに内容を記述（書き方はさっき説明した）
-4. 以後、その値を使って API を操作できます
-
-**忘れたらリセット**するしかないので注意！（一部データは暗号化されており、管理者でも確認できません）
-
-#### デフォルト API トークンのリセット方法
-
-1. MySQL の api_list テーブルの secretId='default'を削除
-2. api_listForView の secretId='default'も同様に削除
-3. 初回登録と同じ感じでやる
-4. データベースに再度 default が追加されていることを確認
-
-## コンソール側で初期化
-
-```shell
-yarn install
-composer install #PHP用
-```
-
-### 実行
-
-```shell
-yarn run dev
-```
-
-### 設定方法
-
-| 項目           | 設定箇所                     |
-| -------------- | ---------------------------- |
-| アプリ名       | /package.json                |
-| フォント       | /layout/default.vue          |
-| ナビゲーション | /items/itemNavigationList.js |
-| 404 ページ     | /error.vue                   |
-
-### Compiles and minifies for production
-
-```shell
-yarn build
-```
-
-### Lints and fixes files
-
-```shell
-yarn lint
-```
-
-### Customize configuration
-
-See [Configuration Reference](https://cli.vuejs.org/config/).
+または、プラグイン「REST API Enabler」などを使用してCORSを有効化できます。
 
 ## トラブルシューティング
 
-### PHP がおかしい
+### 記事が表示されない
 
-composer ちゃんと入れた？
+- `.env` ファイルの `VUE_APP_WORDPRESS_HOST` が正しく設定されているか確認
+- WordPress REST API が有効になっているか確認
+  - ブラウザで `https://your-site.com/wp-json/wp/v2/posts` にアクセスして記事データが返ってくるか確認
+- ネットワーク接続を確認
 
-## Vuetify (Default)
-
-This is the official scaffolding tool for Vuetify, designed to give you a head start in building your new Vuetify application. It sets up a base template with all the necessary configurations and standard directory structure, enabling you to begin development without the hassle of setting up the project from scratch.
-
-## ❗️ Important Links
-
-- 📄 [Docs](https://vuetifyjs.com/)
-- 🚨 [Issues](https://issues.vuetifyjs.com/)
-- 🏬 [Store](https://store.vuetifyjs.com/)
-- 🎮 [Playground](https://play.vuetifyjs.com/)
-- 💬 [Discord](https://community.vuetifyjs.com)
-
-## 💿 Install
-
-Set up your project using your preferred package manager. Use the corresponding command to install the dependencies:
-
-| Package Manager                                           | Command        |
-| --------------------------------------------------------- | -------------- |
-| [yarn](https://yarnpkg.com/getting-started)               | `yarn install` |
-| [npm](https://docs.npmjs.com/cli/v7/commands/npm-install) | `npm install`  |
-| [pnpm](https://pnpm.io/installation)                      | `pnpm install` |
-| [bun](https://bun.sh/#getting-started)                    | `bun install`  |
-
-After completing the installation, your environment is ready for Vuetify development.
-
-## ✨ Features
-
-- 🖼️ **Optimized Front-End Stack**: Leverage the latest Vue 3 and Vuetify 3 for a modern, reactive UI development experience. [Vue 3](https://v3.vuejs.org/) | [Vuetify 3](https://vuetifyjs.com/en/)
-- 🗃️ **State Management**: Integrated with [Pinia](https://pinia.vuejs.org/), the intuitive, modular state management solution for Vue.
-- 🚦 **Routing and Layouts**: Utilizes Vue Router for SPA navigation and vite-plugin-vue-layouts-next for organizing Vue file layouts. [Vue Router](https://router.vuejs.org/) | [vite-plugin-vue-layouts-next](https://github.com/loicduong/vite-plugin-vue-layouts-next)
-- 💻 **Enhanced Development Experience**: Benefit from TypeScript's static type checking and the ESLint plugin suite for Vue, ensuring code quality and consistency. [TypeScript](https://www.typescriptlang.org/) | [ESLint Plugin Vue](https://eslint.vuejs.org/)
-- ⚡ **Next-Gen Tooling**: Powered by Vite, experience fast cold starts and instant HMR (Hot Module Replacement). [Vite](https://vitejs.dev/)
-- 🧩 **Automated Component Importing**: Streamline your workflow with unplugin-vue-components, automatically importing components as you use them. [unplugin-vue-components](https://github.com/antfu/unplugin-vue-components)
-- 🛠️ **Strongly-Typed Vue**: Use vue-tsc for type-checking your Vue components, and enjoy a robust development experience. [vue-tsc](https://github.com/johnsoncodehk/volar/tree/master/packages/vue-tsc)
-
-These features are curated to provide a seamless development experience from setup to deployment, ensuring that your Vuetify application is both powerful and maintainable.
-
-## 💡 Usage
-
-This section covers how to start the development server and build your project for production.
-
-### Starting the Development Server
-
-To start the development server with hot-reload, run the following command. The server will be accessible at [http://localhost:3000](http://localhost:3000):
+### ビルドエラーが発生する
 
 ```bash
-yarn dev
+# node_modules を削除して再インストール
+rm -rf node_modules package-lock.json
+npm install
+
+# キャッシュをクリア
+npm run build -- --force
 ```
 
-(Repeat for npm, pnpm, and bun with respective commands.)
+### Androidビルドエラー
 
-> Add NODE_OPTIONS='--no-warnings' to suppress the JSON import warnings that happen as part of the Vuetify import mapping. If you are on Node [v21.3.0](https://nodejs.org/en/blog/release/v21.3.0) or higher, you can change this to NODE_OPTIONS='--disable-warning=5401'. If you don't mind the warning, you can remove this from your package.json dev script.
+- Android Studio と Android SDK が最新版か確認
+- `npx cap sync android` を実行して同期
+- Android Studioで `File` > `Invalidate Caches / Restart` を実行
 
-### Building for Production
+## カスタマイズ
 
-To build your project for production, use:
+### アプリ名・アイコンの変更
 
-```bash
-yarn build
-```
+- **アプリ名**: `capacitor.config.ts` の `appName` を変更
+- **アプリID**: `capacitor.config.ts` の `appId` を変更
+- **アイコン**: `public/icon.png` を差し替えて `npx capacitor-assets generate` を実行
 
-(Repeat for npm, pnpm, and bun with respective commands.)
+### テーマカラーの変更
 
-Once the build process is completed, your application will be ready for deployment in a production environment.
+`src/styles/settings.scss` または Vuetify設定ファイルでテーマカラーをカスタマイズできます。
 
-## 💪 Support Vuetify Development
+## ライセンス
 
-This project is built with [Vuetify](https://vuetifyjs.com/en/), a UI Library with a comprehensive collection of Vue components. Vuetify is an MIT licensed Open Source project that has been made possible due to the generous contributions by our [sponsors and backers](https://vuetifyjs.com/introduction/sponsors-and-backers/). If you are interested in supporting this project, please consider:
+NOLICENSED - ご自由にお使いください
 
-- [Requesting Enterprise Support](https://support.vuetifyjs.com/)
-- [Sponsoring John on Github](https://github.com/users/johnleider/sponsorship)
-- [Sponsoring Kael on Github](https://github.com/users/kaelwd/sponsorship)
-- [Supporting the team on Open Collective](https://opencollective.com/vuetify)
-- [Becoming a sponsor on Patreon](https://www.patreon.com/vuetify)
-- [Becoming a subscriber on Tidelift](https://tidelift.com/subscription/npm/vuetify)
-- [Making a one-time donation with Paypal](https://paypal.me/vuetify)
+## 貢献
 
-## 📑 License
+プルリクエストを歓迎します。大きな変更の場合は、まずissueを開いて変更内容を議論してください。
 
-[MIT](http://opensource.org/licenses/MIT)
+## 開発者
 
-Copyright (c) 2016-present Vuetify, LLC
+エノキ電気
+
+## 参考リンク
+
+- [Vue 3 公式ドキュメント](https://ja.vuejs.org/)
+- [Vuetify 3 公式ドキュメント](https://vuetifyjs.com/)
+- [Capacitor 公式ドキュメント](https://capacitorjs.com/)
+- [WordPress REST API ハンドブック](https://developer.wordpress.org/rest-api/)
+- [Pinia 公式ドキュメント](https://pinia.vuejs.org/)
+
+---
+
+&copy; 2019-2026 エノキ電気

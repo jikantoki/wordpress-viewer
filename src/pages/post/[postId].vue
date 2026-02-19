@@ -69,6 +69,24 @@ v-card(
             @click="share(viewContents.link, viewContents.title.rendered)"
           )
     .ma-16
+v-dialog(
+  v-model="loading"
+  hide-overlay
+  persistent
+)
+  v-card(
+    style="background: transparent; box-shadow: none;"
+  )
+    v-card-text(
+      style="display: flex; flex-direction: column; align-items: center; gap: 16px;"
+    )
+      v-progress-circular(
+        indeterminate
+        size="64"
+        width="4"
+        color="rgb(var(--v-theme-primary))"
+      )
+      p 読み込み中...
 </template>
 
 <script lang="ts">
@@ -202,9 +220,6 @@ v-card(
               if (url.hostname === blogUrl.hostname) {
                 // アンカーリンクのチェック
                 if (url.hash) {
-                  // url.pathnameは /[categoryName]/[postSlug] 形式で、window.location.pathnameは /post/[postId] 形式なので、単純な比較では同一ページ内のアンカーリンクを判定できない
-                  console.log(url.pathname, window.location.pathname)
-
                   /** 今いるページがWebだった場合のURLを取得 */
                   const currentUrl = this.viewContents.link
 

@@ -6,6 +6,24 @@ Androidアプリ用のパッケージ群
 
 [最新版ダウンロード](https://raw.githubusercontent.com/jikantoki/capacitor-template/refs/heads/main/app-release.apk)
 
+## 機能仕様
+
+/.env ファイルに以下の内容を記述すると、WordpressのREST APIを呼び出せる
+
+```env
+# Wordpressが存在するサーバー
+VUE_APP_WORDPRESS_HOST=
+```
+
+## テストデータ
+
+テストは以下のサーバーを通じて行うこと
+
+```env
+# エノキ電気ニュースのURL
+VUE_APP_WORDPRESS_HOST=https://blog.caramelos.xyz
+```
+
 ## Nuxt4 Template
 
 Nuxt を簡単にインストールしてすぐ使うためのテンプレート

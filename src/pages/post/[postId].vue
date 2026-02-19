@@ -470,14 +470,48 @@ iframe {
     }
   }
 
+  .wp-block-list {
+    margin: 8px 0;
+    padding-left: 1.5em;
+    li {
+      margin: 4px 0;
+    }
+  }
+
+  p {
+     margin: 8px 0;
+     &.has-large-font-size {
+       font-size: 2em;
+     }
+  }
+
   // WordPressのブロックエディタで生成されるリンクのスタイル調整
   a {
     color: rgb(var(--v-theme-primary));
   }
 
   // WordPressの見出しブロックのスタイル調整
-  .wp-block-heading {
-    margin: 16px 0 8px 0;
+  h2.wp-block-heading {
+    margin: 32px 0 16px 0;
+    padding: 16px 8px;
+    background-color: rgba(var(--v-theme-primary), 0.1);
+    border-radius: 16px;
+    text-align: center;
+  }
+
+  h3.wp-block-heading {
+    margin: 24px 0 12px 0;
+    padding: 8px;
+    vertical-align: middle;
+    &:before {
+      content: '・';
+      color: transparent;
+      background-color: rgba(var(--v-theme-primary), 1);
+      margin-right: 1em;
+      width: 0.3em;
+      height: 2em;
+      display: inline-block;
+    }
   }
 
   // WordPressのテーブルブロックのスタイル調整

@@ -881,6 +881,11 @@ iframe {
 }
 
 #ez-toc-container {
+  .ez-toc-title {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin: 16px 0 8px 0;
+  }
   .ez-toc-cssicon-toggle-label {
     display: none;
   }

@@ -381,6 +381,28 @@ v-card(
                 @click="share(viewContents.link, viewContents.title.rendered)"
               )
         .ma-16
+  //-- 画像拡大ダイアログ --
+  v-dialog(
+    v-model="imageDialog"
+    max-width="100%"
+    @click:outside="imageDialog = false"
+  )
+    v-card(style="background-color: rgba(0, 0, 0, 0.9);")
+      v-card-actions(style="position: absolute; top: 0; right: 0; z-index: 1;")
+        v-btn(
+          icon="mdi-close"
+          @click="imageDialog = false"
+          color="white"
+        )
+      v-card-text(
+        style="display: flex; justify-content: center; align-items: center; padding: 0;"
+        @click="imageDialog = false"
+      )
+        img(
+          :src="selectedImageUrl"
+          style="max-width: 100%; max-height: 90vh; object-fit: contain; cursor: zoom-out;"
+          @click.stop="imageDialog = false"
+        )
 </template>
 
 <script lang="ts">
@@ -448,6 +470,10 @@ v-card(
         viewContents: null as any,
         /** 選択中のカテゴリ */
         selectedCategory: null as WPCategory | null,
+        /** 画像拡大ダイアログの表示フラグ */
+        imageDialog: false,
+        /** 選択された画像のURL */
+        selectedImageUrl: '' as string,
       }
     },
     computed: {
@@ -819,6 +845,29 @@ v-card(
             } catch (error) {
               console.error('リンク処理エラー:', error)
               await this.openURL(href)
+            }
+          })
+        }
+
+        // 画像にクリックハンドラを設定
+        const images = postContents.querySelectorAll('img')
+
+        for (const img of Array.from(images)) {
+          // すでにハンドラが設定されている場合はスキップ
+          if (img.dataset.handlerSet === 'true') continue
+          img.dataset.handlerSet = 'true'
+
+          // 画像をクリック可能にするスタイル設定
+          img.style.cursor = 'pointer'
+
+          img.addEventListener('click', event => {
+            event.preventDefault()
+            event.stopPropagation()
+
+            const src = img.getAttribute('src')
+            if (src) {
+              this.selectedImageUrl = src
+              this.imageDialog = true
             }
           })
         }

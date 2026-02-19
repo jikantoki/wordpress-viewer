@@ -653,6 +653,16 @@ v-card(
           Toast.show({ text: '最後まで検索しました！' })
         }
       },
+      /** カテゴリでフィルタリング */
+      async filterByCategory (category: WPCategory) {
+        this.selectedCategory = category
+        await this.reload()
+      },
+      /** カテゴリフィルタをクリア */
+      async clearCategoryFilter () {
+        this.selectedCategory = null
+        await this.reload()
+      },
       /** 投稿を表示 */
       async viewPost (post: any) {
         this.posts.setCurrentPost(post)
@@ -662,7 +672,7 @@ v-card(
   }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 //scopedだとv-dialog内のスタイルが適用されないため外す
 .right-bottom-buttons {
   position: fixed;

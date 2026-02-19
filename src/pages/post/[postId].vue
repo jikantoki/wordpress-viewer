@@ -393,6 +393,7 @@ iframe {
     aspect-ratio: 16/9;
     border-radius: 8px;
     margin: 8px 0;
+    object-fit: cover !important;
     cursor: pointer;
   }
   .ez-toc-counter {

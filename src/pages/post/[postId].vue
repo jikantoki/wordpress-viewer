@@ -39,6 +39,8 @@ v-card(
         img.mb-4(
           :src="selectThumbnail(viewContents)"
           style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 16px; cursor: pointer;"
+          onError="this.src='/thumbnail.jpg'"
+          @click="selectedImageUrl = selectThumbnail(viewContents); imageDialog = true"
           )
       .post-contents(
         v-html="viewContents ? viewContents.content?.rendered : ''"

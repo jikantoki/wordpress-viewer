@@ -50,7 +50,9 @@ v-card(
         v-if="viewContents"
         style="padding: 0 0.5em;"
         )
-        hr.my-4(style="width: 100%;")
+        hr.my-8(style="width: 100%;")
+        .category-title.mb-2
+          p(style="font-weight: bold; margin: 0;") カテゴリー:
         .category-chips.mb-3(
           v-if="viewContents._embedded && viewContents._embedded['wp:term'] && viewContents._embedded['wp:term'][0] && viewContents._embedded['wp:term'][0].length > 0"
           style="display: flex; flex-wrap: wrap; gap: 0.5em;"
@@ -62,6 +64,9 @@ v-card(
             style="cursor: default;"
             )
             | {{ cat.name }}
+        hr.my-8(style="width: 100%;")
+        .author-title.mb-2.mt-4
+          p(style="font-weight: bold; margin: 0;") 投稿者情報:
         .author-info(
           v-if="viewContents._embedded && viewContents._embedded.author && viewContents._embedded.author[0]"
           style="display: flex; align-items: center; gap: 1em; padding: 0.5em 0; cursor: pointer;"

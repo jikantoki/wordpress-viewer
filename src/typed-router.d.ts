@@ -21,6 +21,7 @@ declare module 'vue-router/auto-routes' {
     '/': RouteRecordInfo<'/', '/', Record<never, never>, Record<never, never>>,
     '/[ready]': RouteRecordInfo<'/[ready]', '/:ready', { ready: ParamValue<true> }, { ready: ParamValue<false> }>,
     '/about': RouteRecordInfo<'/about', '/about', Record<never, never>, Record<never, never>>,
+    '/author/[authorId]': RouteRecordInfo<'/author/[authorId]', '/author/:authorId', { authorId: ParamValue<true> }, { authorId: ParamValue<false> }>,
     '/friendlist': RouteRecordInfo<'/friendlist', '/friendlist', Record<never, never>, Record<never, never>>,
     '/login': RouteRecordInfo<'/login', '/login', Record<never, never>, Record<never, never>>,
     '/password_reset': RouteRecordInfo<'/password_reset', '/password_reset', Record<never, never>, Record<never, never>>,
@@ -57,6 +58,10 @@ declare module 'vue-router/auto-routes' {
     }
     'src/pages/about.vue': {
       routes: '/about'
+      views: never
+    }
+    'src/pages/author/[authorId].vue': {
+      routes: '/author/[authorId]'
       views: never
     }
     'src/pages/friendlist.vue': {

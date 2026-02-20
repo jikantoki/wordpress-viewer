@@ -66,18 +66,28 @@ v-card(
             p.opacity05(
             ) 投稿日: {{ new Date(post.date).toLocaleDateString() }}
         p.description {{ post.excerpt.rendered.replace(/<[^>]+>/g, '').slice(0, 100) }}...
-        .category.mt-2(
-          v-if="post._embedded && post._embedded['wp:term'] && post._embedded['wp:term'][0] && post._embedded['wp:term'][0].length > 0"
-          style="display: flex; flex-wrap: wrap; gap: 0.5em;"
+        .author-and-category.mt-2(
+          style="display: flex; align-items: center; gap: 0.5em;"
           )
-          v-chip(
-            v-for="cat in post._embedded['wp:term'][0]"
-            :key="cat.id"
-            size="small"
-            @click.stop="filterByCategory(cat)"
-            style="cursor: pointer;"
+          img(
+            v-if="post._embedded && post._embedded.author && post._embedded.author[0]"
+            :src="post._embedded.author[0].avatar_urls && post._embedded.author[0].avatar_urls['96'] ? post._embedded.author[0].avatar_urls['96'] : '/account_default.jpg'"
+            onerror="this.src='/account_default.jpg'"
+            style="border-radius: 9999px; width: 2em; height: 2em; cursor: pointer; flex-shrink: 0;"
+            @click.stop="$router.push(`/author/${post._embedded.author[0].id}`)"
             )
-            | {{ cat.name }}
+          .category-chips(
+            v-if="post._embedded && post._embedded['wp:term'] && post._embedded['wp:term'][0] && post._embedded['wp:term'][0].length > 0"
+            style="display: flex; flex-wrap: wrap; gap: 0.5em;"
+            )
+            v-chip(
+              v-for="cat in post._embedded['wp:term'][0]"
+              :key="cat.id"
+              size="small"
+              @click.stop="filterByCategory(cat)"
+              style="cursor: pointer;"
+              )
+              | {{ cat.name }}
         img.mt-2(
           :src="selectThumbnail(post)"
           style="border-radius: 8px; width: 100%; aspect-ratio: 16/9; object-fit: cover;"
@@ -103,18 +113,28 @@ v-card(
             p.description.mt-2(
               style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
             ) {{ post.excerpt.rendered.replace(/<[^>]+>/g, '').slice(0, 100) }}...
-          .category.mt-2(
-            v-if="post._embedded && post._embedded['wp:term'] && post._embedded['wp:term'][0] && post._embedded['wp:term'][0].length > 0"
-            style="display: flex; flex-wrap: wrap; gap: 0.5em;"
+          .author-and-category.mt-2(
+            style="display: flex; align-items: center; gap: 0.5em;"
             )
-            v-chip(
-              v-for="cat in post._embedded['wp:term'][0]"
-              :key="cat.id"
-              size="small"
-              @click.stop="filterByCategory(cat)"
-              style="cursor: pointer;"
+            img(
+              v-if="post._embedded && post._embedded.author && post._embedded.author[0]"
+              :src="post._embedded.author[0].avatar_urls && post._embedded.author[0].avatar_urls['96'] ? post._embedded.author[0].avatar_urls['96'] : '/account_default.jpg'"
+              onerror="this.src='/account_default.jpg'"
+              style="border-radius: 9999px; width: 2em; height: 2em; cursor: pointer; flex-shrink: 0;"
+              @click.stop="$router.push(`/author/${post._embedded.author[0].id}`)"
               )
-              | {{ cat.name }}
+            .category-chips(
+              v-if="post._embedded && post._embedded['wp:term'] && post._embedded['wp:term'][0] && post._embedded['wp:term'][0].length > 0"
+              style="display: flex; flex-wrap: wrap; gap: 0.5em;"
+              )
+              v-chip(
+                v-for="cat in post._embedded['wp:term'][0]"
+                :key="cat.id"
+                size="small"
+                @click.stop="filterByCategory(cat)"
+                style="cursor: pointer;"
+                )
+                | {{ cat.name }}
     //-- もっと見るボタン --
     .text-center.my-4
       v-btn(

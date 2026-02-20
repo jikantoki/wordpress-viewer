@@ -15,14 +15,26 @@ v-card(
       ) {{ viewContents ? viewContents.title?.rendered : '投稿' }}
     v-spacer
     v-btn(
-      icon="mdi-reload"
-      @click="reload()"
-      :loading="loading"
+      icon="mdi-share-variant"
+      @click="sharePost()"
     )
-    v-btn(
-      icon="mdi-open-in-new"
-      @click="openInBrowser()"
-    )
+    v-menu(v-model="moreMenu")
+      template(v-slot:activator="{ props }")
+        v-btn(
+          icon="mdi-dots-vertical"
+          v-bind="props"
+        )
+      v-list
+        v-list-item(
+          prepend-icon="mdi-reload"
+          title="再読み込み"
+          @click="reload()"
+        )
+        v-list-item(
+          prepend-icon="mdi-open-in-new"
+          title="ブラウザで開く"
+          @click="openInBrowser()"
+        )
   v-card-text(style="height: -webkit-fill-available; overflow-y: auto;")
     .contents-wrap(
       style="width: 100%;"
@@ -42,10 +54,52 @@ v-card(
           onError="this.src='/thumbnail.jpg'"
           @click="selectedImageUrl = selectThumbnail(viewContents); imageDialog = true"
           )
+      .post-title.mb-4(
+        v-if="viewContents"
+        style="font-size: 1.5em; font-weight: bold;"
+        ) {{ viewContents.title?.rendered }}
       .post-contents(
         v-html="viewContents ? viewContents.content?.rendered : ''"
         style="width: 100%;"
         )
+      .post-meta(
+        v-if="viewContents"
+        style="padding: 0 0.5em;"
+        )
+        hr.my-8(style="width: 100%;")
+        .category-title.mb-2
+          p(style="font-weight: bold; margin: 0;") カテゴリー:
+        .category-chips.mb-3(
+          v-if="viewContents._embedded && viewContents._embedded['wp:term'] && viewContents._embedded['wp:term'][0] && viewContents._embedded['wp:term'][0].length > 0"
+          style="display: flex; flex-wrap: wrap; gap: 0.5em;"
+          )
+          v-chip(
+            v-for="cat in viewContents._embedded['wp:term'][0]"
+            :key="cat.id"
+            size="small"
+            style="cursor: default;"
+            )
+            | {{ cat.name }}
+        hr.my-8(style="width: 100%;")
+        .author-title.mb-2.mt-4
+          p(style="font-weight: bold; margin: 0;") 投稿者情報:
+        .author-info(
+          v-if="viewContents._embedded && viewContents._embedded.author && viewContents._embedded.author[0]"
+          style="display: flex; align-items: center; gap: 1em; padding: 0.5em 0; cursor: pointer;"
+          @click="$router.push(`/author/${viewContents._embedded.author[0].id}`)"
+          )
+          img(
+            :src="viewContents._embedded.author[0].avatar_urls && viewContents._embedded.author[0].avatar_urls['96'] ? viewContents._embedded.author[0].avatar_urls['96'] : '/account_default.jpg'"
+            onerror="this.src='/account_default.jpg'"
+            style="border-radius: 9999px; width: 3em; height: 3em; object-fit: cover; flex-shrink: 0;"
+            )
+          .author-text
+            p(style="font-weight: bold; margin: 0;") {{ viewContents._embedded.author[0].name }}
+            p(style="opacity: 0.7; margin: 0; font-size: 0.9em;") @{{ viewContents._embedded.author[0].slug }}
+            p(
+              v-if="viewContents._embedded.author[0].description"
+              style="margin: 0.3em 0 0; font-size: 0.85em; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;"
+              ) {{ viewContents._embedded.author[0].description }}
       .share-space(
         v-if="viewContents"
         style="display: flex; flex-direction: column; align-items: center;"
@@ -142,6 +196,8 @@ v-dialog(
         selectedImageUrl: '' as string,
         /** 選択された画像のalt属性 */
         selectedImageAlt: '' as string,
+        /** その他メニューの表示フラグ */
+        moreMenu: false,
       }
     },
     computed: {
@@ -237,6 +293,14 @@ v-dialog(
         await Share.share({
           url: content,
           title: title,
+        })
+      },
+      /** 上部バーの共有ボタン：ホスト名/カテゴリ/スラグ形式でURLを生成して共有 */
+      async sharePost () {
+        if (!this.viewContents) return
+        await Share.share({
+          url: this.viewContents.link,
+          title: this.viewContents.title?.rendered,
         })
       },
       /**
@@ -432,6 +496,7 @@ iframe {
 
 // WordPressのブロックエディタで生成されるコンテンツのスタイル調整
 .post-contents {
+  user-select: text; /* テキスト選択を有効にする */
   // WordPressのブロックエディタで生成される画像のスタイル調整
   ::v-deep(img) {
     max-width: 100%;

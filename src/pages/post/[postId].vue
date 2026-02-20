@@ -42,6 +42,10 @@ v-card(
           onError="this.src='/thumbnail.jpg'"
           @click="selectedImageUrl = selectThumbnail(viewContents); imageDialog = true"
           )
+      .post-title.mb-4(
+        v-if="viewContents"
+        style="font-size: 1.5em; font-weight: bold;"
+        ) {{ viewContents.title?.rendered }}
       .post-contents(
         v-html="viewContents ? viewContents.content?.rendered : ''"
         style="width: 100%;"
@@ -470,6 +474,7 @@ iframe {
 
 // WordPressのブロックエディタで生成されるコンテンツのスタイル調整
 .post-contents {
+  user-select: text; /* テキスト選択を有効にする */
   // WordPressのブロックエディタで生成される画像のスタイル調整
   ::v-deep(img) {
     max-width: 100%;

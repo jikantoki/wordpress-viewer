@@ -46,6 +46,39 @@ v-card(
         v-html="viewContents ? viewContents.content?.rendered : ''"
         style="width: 100%;"
         )
+      .post-meta(
+        v-if="viewContents"
+        style="padding: 0 0.5em;"
+        )
+        hr.my-4(style="width: 100%;")
+        .category-chips.mb-3(
+          v-if="viewContents._embedded && viewContents._embedded['wp:term'] && viewContents._embedded['wp:term'][0] && viewContents._embedded['wp:term'][0].length > 0"
+          style="display: flex; flex-wrap: wrap; gap: 0.5em;"
+          )
+          v-chip(
+            v-for="cat in viewContents._embedded['wp:term'][0]"
+            :key="cat.id"
+            size="small"
+            style="cursor: default;"
+            )
+            | {{ cat.name }}
+        .author-info(
+          v-if="viewContents._embedded && viewContents._embedded.author && viewContents._embedded.author[0]"
+          style="display: flex; align-items: center; gap: 1em; padding: 0.5em 0; cursor: pointer;"
+          @click="$router.push(`/author/${viewContents._embedded.author[0].id}`)"
+          )
+          img(
+            :src="viewContents._embedded.author[0].avatar_urls && viewContents._embedded.author[0].avatar_urls['96'] ? viewContents._embedded.author[0].avatar_urls['96'] : '/account_default.jpg'"
+            onerror="this.src='/account_default.jpg'"
+            style="border-radius: 9999px; width: 3em; height: 3em; object-fit: cover; flex-shrink: 0;"
+            )
+          .author-text
+            p(style="font-weight: bold; margin: 0;") {{ viewContents._embedded.author[0].name }}
+            p(style="opacity: 0.7; margin: 0; font-size: 0.9em;") @{{ viewContents._embedded.author[0].slug }}
+            p(
+              v-if="viewContents._embedded.author[0].description"
+              style="margin: 0.3em 0 0; font-size: 0.85em; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;"
+              ) {{ viewContents._embedded.author[0].description }}
       .share-space(
         v-if="viewContents"
         style="display: flex; flex-direction: column; align-items: center;"

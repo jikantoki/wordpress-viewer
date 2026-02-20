@@ -15,14 +15,26 @@ v-card(
       ) {{ viewContents ? viewContents.title?.rendered : '投稿' }}
     v-spacer
     v-btn(
-      icon="mdi-reload"
-      @click="reload()"
-      :loading="loading"
+      icon="mdi-share-variant"
+      @click="sharePost()"
     )
-    v-btn(
-      icon="mdi-open-in-new"
-      @click="openInBrowser()"
-    )
+    v-menu(v-model="moreMenu")
+      template(v-slot:activator="{ props }")
+        v-btn(
+          icon="mdi-dots-vertical"
+          v-bind="props"
+        )
+      v-list
+        v-list-item(
+          prepend-icon="mdi-reload"
+          title="再読み込み"
+          @click="reload()"
+        )
+        v-list-item(
+          prepend-icon="mdi-open-in-new"
+          title="ブラウザで開く"
+          @click="openInBrowser()"
+        )
   v-card-text(style="height: -webkit-fill-available; overflow-y: auto;")
     .contents-wrap(
       style="width: 100%;"
@@ -142,6 +154,8 @@ v-dialog(
         selectedImageUrl: '' as string,
         /** 選択された画像のalt属性 */
         selectedImageAlt: '' as string,
+        /** その他メニューの表示フラグ */
+        moreMenu: false,
       }
     },
     computed: {
@@ -237,6 +251,14 @@ v-dialog(
         await Share.share({
           url: content,
           title: title,
+        })
+      },
+      /** 上部バーの共有ボタン：ホスト名/カテゴリ/スラグ形式でURLを生成して共有 */
+      async sharePost () {
+        if (!this.viewContents) return
+        await Share.share({
+          url: this.viewContents.link,
+          title: this.viewContents.title?.rendered,
         })
       },
       /**

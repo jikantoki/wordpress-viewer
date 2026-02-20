@@ -256,12 +256,8 @@ v-dialog(
       /** 上部バーの共有ボタン：ホスト名/カテゴリ/スラグ形式でURLを生成して共有 */
       async sharePost () {
         if (!this.viewContents) return
-        const category = this.viewContents._embedded?.['wp:term']?.[0]?.[0]?.slug
-        const postSlug = this.viewContents.slug
-        const path = category ? `${category}/${postSlug}` : postSlug
-        const shareUrl = `${this.env.VUE_APP_WORDPRESS_HOST}/${path}`
         await Share.share({
-          url: shareUrl,
+          url: this.viewContents.link,
           title: this.viewContents.title?.rendered,
         })
       },
